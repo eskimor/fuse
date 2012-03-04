@@ -6,9 +6,6 @@
   See the file COPYING.LIB.
 */
 
-#ifndef _FUSE_H_
-#define _FUSE_H_
-
 /** @file
  *
  * This file defines the library interface of FUSE
