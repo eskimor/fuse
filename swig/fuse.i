@@ -4,11 +4,11 @@
 /* Put headers and other declarations here */
 #include "../C/fuse.h"
 %}
-%include <bits/typesizes.h>
-%include <bits/wordsize.h>
-%include <bits/types.h>
-%include <features.h>
+//%include <bits/wordsize.h>
+//%include <bits/types.h>
+//%include <features.h>
 %include <sys/types.h>
+%include <sys/stat.h>
 struct fuse_operations {
 	/** Get file attributes.
 	 *
