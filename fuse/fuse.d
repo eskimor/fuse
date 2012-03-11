@@ -1,5 +1,17 @@
 import fuse.util;
 import fuse.fuse_impl;
+import std.bitmanip;
+public import fuse.c_defs;
+
+/**
+ * Main interface you have to implement for a fuse filesystem.
+ * Usually you won't derive from this interface directly but instead from 
+ * the auto generated (thanks to compile time reflection and mixins) FuseOperations
+ * class which implements default implementations for all methods, just spiting out a not
+ * implemented error.
+ * All pointers and arrays passed to the methods in this interfaces refer to the original data passed
+ * by the fuse library, if you have to keep a reference, copy the data.
+*/
 interface FuseOperationsInterface {
 	/** Get file attributes.
 	 *
@@ -7,7 +19,7 @@ interface FuseOperationsInterface {
 	 * ignored.	 The 'st_ino' field is ignored except if the 'use_ino'
 	 * mount option is given.
 	 */
-	int getattr (const(char)[] path, struct stat *);
+	int getattr (const(char)[] path, stat* stbuf);
 
 	/** Read the target of a symbolic link
 	 *
@@ -25,7 +37,7 @@ interface FuseOperationsInterface {
 	 * nodes.  If the filesystem defines a create() method, then for
 	 * regular files that will be called instead.
 	 */
-	int mknod (const(char)[] path, mode_t mode, dev_t);
+	int mknod (const(char)[] path, mode_t mode, dev_t dev);
 
 	/** Create a directory 
 	 *
@@ -76,7 +88,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int open (const(char)[] path, struct fuse_file_info *);
+	int open (const(char)[] path, fuse_file_info *);
 
 	/** Read data from an open file
 	 *
@@ -89,8 +101,8 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int read (const(char)[] path, char[] readbuf, off_t=0;
-			struct fuse_file_info *);
+	int read (const(char)[] path, char[] readbuf, off_t offset,
+			fuse_file_info * info );
 
 	/** Write data to an open file
 	 *
@@ -101,7 +113,7 @@ interface FuseOperationsInterface {
 	 * Changed in version 2.2
 	 */
 	int write (const(char)[] path, const(char)[] data, off_t=0;
-			struct fuse_file_info *);
+			fuse_file_info *);
 
 	/** Get file system statistics
 	 *
@@ -110,7 +122,7 @@ interface FuseOperationsInterface {
 	 * Replaced 'struct statfs' parameter with 'struct statvfs' in
 	 * version 2.5
 	 */
-	int statfs (const(char)[] path, struct statvfs *);
+	int statfs (const(char)[] path, statvfs *);
 
 	/** Possibly flush cached data
 	 *
@@ -135,7 +147,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int flush (const(char)[] path, struct fuse_file_info *);
+	int flush (const(char)[] path, fuse_file_info *);
 
 	/** Release an open file
 	 *
@@ -151,7 +163,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int release (const(char)[] path, struct fuse_file_info *);
+	int release (const(char)[] path, fuse_file_info *);
 
 	/** Synchronize file contents
 	 *
@@ -160,7 +172,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int fsync (const(char)[] path, int, struct fuse_file_info *);
+	int fsync (const(char)[] path, int, fuse_file_info *);
 
 	/** Set extended attributes */
 	int setxattr (const(char)[] path, const(char)[] name, const(byte)[] data, int);
@@ -187,7 +199,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int opendir (const(char)[] path, struct fuse_file_info *);
+	int opendir (const(char)[] path, fuse_file_info *);
 
 	/** Read directory
 	 *
@@ -211,13 +223,13 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.3
 	 */
 	int readdir (const(char)[] path, void *, fuse_fill_dir_t, off_t,
-			struct fuse_file_info *);
+			fuse_file_info *);
 
 	/** Release directory
 	 *
 	 * Introduced in version 2.3
 	 */
-	int releasedir (const(char)[] path, struct fuse_file_info *);
+	int releasedir (const(char)[] path, fuse_file_info *);
 
 	/** Synchronize directory contents
 	 *
@@ -226,7 +238,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int fsyncdir (const(char)[] path, int, struct fuse_file_info *);
+	int fsyncdir (const(char)[] path, int, fuse_file_info *);
 
 	/**
 	 * Initialize filesystem
@@ -238,7 +250,7 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.3
 	 * Changed in version 2.6
 	 */
-	void *init (struct fuse_conn_info *conn);
+	void *init (fuse_conn_info *conn);
 
 	/**
 	 * Clean up filesystem
@@ -274,7 +286,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int create (const(char)[] path, mode_t, struct fuse_file_info *);
+	int create (const(char)[] path, mode_t, fuse_file_info *);
 
 	/**
 	 * Change the size of an open file
@@ -288,7 +300,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int ftruncate (const(char)[] path, off_t, struct fuse_file_info *);
+	int ftruncate (const(char)[] path, off_t, fuse_file_info *);
 
 	/**
 	 * Get attributes from an open file
@@ -302,7 +314,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int fgetattr (const(char)[] path, struct stat *, struct fuse_file_info *);
+	int fgetattr (const(char)[] path, stat *, fuse_file_info *);
 
 	/**
 	 * Perform POSIX file locking operation
@@ -336,8 +348,8 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int lock (const(char)[] path, struct fuse_file_info *, int cmd=0;
-			struct flock *);
+	int lock (const(char)[] path, fuse_file_info *, int cmd=0;
+			flock *);
 
 	/**
 	 * Change the access and modification times of a file with
@@ -345,7 +357,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int utimens (const(char)[] path, const struct timespec tv[2]);
+	int utimens (const(char)[] path, const timespec tv[2]);
 
 	/**
 	 * Map block index within file to block index within device
@@ -370,7 +382,7 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.8
 	 */
 	int ioctl (const(char)[] path, int cmd, void *arg,
-			struct fuse_file_info *, unsigned int flags, void *data);
+			fuse_file_info *, unsigned int flags, void *data);
 
 	/**
 	 * Poll for IO readiness events
@@ -389,24 +401,74 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.8
 	 */
-	int poll (const(char)[] path, struct fuse_file_info *,	struct fuse_pollhandle *ph, unsigned *reventsp);
+	int poll (const(char)[] path, fuse_file_info *,	fuse_pollhandle *ph, unsigned *reventsp);
 };
 
-mixin(createImplementation!(FuseOperationsInterface, "FuseOperationsDefault")());
+/**
+ * Derive from FuseOperations, if you want to have predefined methods, which simply spit out a not implemented error.
+*/ 
+mixin(createImplementation!(FuseOperationsInterface, "FuseOperations")());
 
-class FuseOperations : FuseOperationsDefault {
-	this() {
-		deimos_d_init
-	}
-}
 
-int fuse_main_real(int argc, const(char*)* argv, const struct fuse_operations *op,
-		   size_t op_size, void *user_data);
 int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 	current_fuse_interface=operations;
 	const(char*)[] c_args=new const(char*)[](args.length);
 	foreach(i, arg; args) 
 		c_args[i]=arg.ptr;
-	fuse_main_real(c_args.length, c_args.ptr,);
+	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "my_")());
+	fuse_main_real(c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
+}
+extern(C) {
+	alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino);
+	extern struct fuse_dirhandle;
+	alias fuse_dirhandle* fuse_dirh_t;
+	struct fuse_file_info {
+		/** Open flags.	 Available in open() and release() */
+		int flags;
+
+		/** Old file handle, don't use */
+		version(X86) {
+			uint fh_old;
+		}
+		else version(X86_64) {
+			ulong fh_old;
+		} else {
+			pragma(msg, "Unsupported architecture");
+			static assert(0);
+		}
+
+
+		/** In case of a write operation indicates if this was caused by a
+		  writepage */
+		int writepage;
+		mixin(bitfields!(
+			bool, "direct_io", 1,
+			bool, "keep_cache", 1,
+			bool, "flush", 1,
+			bool, "unseekable", 1,
+			uint, "padding", 28));
+
+		/** File handle.  May be filled in by filesystem in open().
+		  Available in all other file operations */
+		ulong fh;
+
+		/** Lock owner id.  Available in locking operations and flush */
+		uint lock_owner;
+	};
+	extern size_t c_get_fuse_file_info_size();
+	// Expectes the bitfield to be set this way:
+	// direct_io:1, keep_cache:0, flushe:1, nonseekable:0
+	extern int bit_field_check_fuse_file_info(fuse_file_info* test); 
+	unittest {
+		assert(fuse_file_info.sizeof==c_get_fuse_file_info_size()));
+		fuse_file_info my_info;
+		with(my_info) {
+			direct_io=1;
+			keep_cache=0;
+			flush=1;
+			nonseekable=0;
+		}
+		assert(bit_field_check_fuse_file_info(&my_info));
+	}
 }
 

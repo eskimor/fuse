@@ -1,11 +1,20 @@
 module fuse.fuse_impl;
 import fuse.fuse;
+import fuse.c_defs;
 
 package:
 FuseOperationsInterface current_fuse_interface;
 extern (C) {
+	// Forward declarations:
+	extern struct fuse;
+	// Main entry point:
+	extern int fuse_main_real(int argc, const(char*)* argv, const fuse_operations *op,
+		   size_t op_size, void *user_data);
+
+	extern struct fuse_context *fuse_get_context(void);
+
 	struct fuse_operations {
-		int function (const char *, struct stat *) getattr;
+		int function (const char *, stat *) getattr;
 
 		int function (const char *, char *, size_t) readlink;
 
@@ -40,23 +49,23 @@ extern (C) {
 
 		int function (const char *, off_t) truncate;
 
-		int function (const char *, struct utimbuf *) utime;
+		int function (const char *, utimbuf *) utime;
 
-		int function (const char *, struct fuse_file_info *) open;
+		int function (const char *, fuse_file_info *) open;
 
 		int function (const char *, char *, size_t, off_t,
-				struct fuse_file_info *) read;
+				fuse_file_info *) read;
 
 		int function (const char *, const char *, size_t, off_t,
-				struct fuse_file_info *) write;
+				fuse_file_info *) write;
 
-		int function (const char *, struct statvfs *) statfs;
+		int function (const char *, statvfs *) statfs;
 
-		int function (const char *, struct fuse_file_info *) flush;
+		int function (const char *, fuse_file_info *) flush;
 
-		int function (const char *, struct fuse_file_info *) release;
+		int function (const char *, fuse_file_info *) release;
 
-		int function (const char *, int, struct fuse_file_info *) fsync;
+		int function (const char *, int, fuse_file_info *) fsync;
 
 
 		int function (const char *, const char *, const char *, size_t, int) setxattr;
@@ -70,43 +79,42 @@ extern (C) {
 
 		int function (const char *, const char *) removexattr;
 
-		int function (const char *, struct fuse_file_info *) opendir;
+		int function (const char *, fuse_file_info *) opendir;
 
 		int function (const char *, void *, fuse_fill_dir_t, off_t,
-				struct fuse_file_info *) readdir;
+				fuse_file_info *) readdir;
 
-		int function (const char *, struct fuse_file_info *) releasedir;
+		int function (const char *, fuse_file_info *) releasedir;
 
-		int function (const char *, int, struct fuse_file_info *) fsyncdir;
+		int function (const char *, int, fuse_file_info *) fsyncdir;
 
-		void *function (struct fuse_conn_info *conn) init;
+		void function (fuse_conn_info *conn) init;
 
-		void function (void *) destroy;
+		void function (void* data) destroy;
 
 		int function (const char *, int) access;
 
-		int function (const char *, mode_t, struct fuse_file_info *) create;
+		int function (const char *, mode_t, fuse_file_info *) create;
 
-		int function (const char *, off_t, struct fuse_file_info *) ftruncate;
+		int function (const char *, off_t, fuse_file_info *) ftruncate;
 
-		int function (const char *, struct stat *, struct fuse_file_info *) fgetattr;
+		int function (const char *, stat *, fuse_file_info *) fgetattr;
 
-		int function (const char *, struct fuse_file_info *, int cmd,
-				struct flock *) lock;
+		int function (const char *, fuse_file_info *, int cmd,
+				flock *) lock;
 
-		int function (const char *, const struct timespec tv[2]) utimens;
+		int function (const char *, const timespec tv[2]) utimens;
 
-		int function (const char *, size_t blocksize, uint64_t *idx) bmap;
+		int function (const char *, size_t blocksize, ulong *idx) bmap;
 
 		uint flags;
 
 		int function (const char *, int cmd, void *arg,
-				struct fuse_file_info *, unsigned int flags, void *data) ioctl;
+				fuse_file_info *, unsigned int flags, void *data) ioctl;
 
-		int function (const char *, struct fuse_file_info *,
-				struct fuse_pollhandle *ph, unsigned *reventsp) poll;
+		int function (const char *, fuse_file_info *,
+				fuse_pollhandle *ph, unsigned *reventsp) poll;
 	};
-
 	/** Extra context that may be needed by some filesystems
 	 *
 	 * The uid, gid and pid fields are not filled in case of a writepage
@@ -114,7 +122,7 @@ extern (C) {
 	 */
 	struct fuse_context {
 		/** Pointer to the fuse object */
-		struct fuse *fuse;
+		fuse *fuse;
 
 		/** User ID of the calling process */
 		uid_t uid;
@@ -188,12 +196,11 @@ extern (C) {
 		uint[25] reserved;
 	}
 
-	// Main entry point:
-	int fuse_main_real(int argc, const(char*)* argv, const struct fuse_operations *op,
-		   size_t op_size, void *user_data);
-
-	int deimos_d_fuse_getattr (const char *, struct stat *);
-
+	int deimos_d_fuse_getattr (const char * path, stat * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
+		return ops->getattr(cString2DString(path), info);
+	}
+/*
 	int deimos_d_fuse_readlink (const char *, char *, size_t);
 
 	int deimos_d_fuse_mknod (const char *, mode_t, dev_t);
@@ -225,12 +232,18 @@ extern (C) {
 	int deimos_d_fuse_truncate (const char *, off_t);
 
 	int deimos_d_fuse_utime (const char *, struct utimbuf *);
+*/
+	int deimos_d_fuse_open (const char * path, struct fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
+		return ops->open(cString2DString(path), info);
+	}
 
-	int deimos_d_fuse_open (const char *, struct fuse_file_info *);
-
-	int deimos_d_fuse_read (const char *, char *, size_t, off_t,
-			struct fuse_file_info *);
-
+	int deimos_d_fuse_read (const char * path, ubyte * data , size_t data_length, 
+			off_t offset, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
+		return ops->read(cString2DString(path), cArray2DArray!ubyte(data, data_length), offset, info);
+	}
+/*
 	int deimos_d_fuse_write (const char *, const char *, size_t, off_t,
 			struct fuse_file_info *);
 
@@ -263,11 +276,10 @@ extern (C) {
 
 	int deimos_d_fuse_fsyncdir (const char *, int, struct fuse_file_info *);
 
-	void* deimos_d_fuse_init (struct fuse_conn_info *conn) {
+	//void* deimos_d_fuse_init (struct fuse_conn_info *conn) {
+	//}
 
-	}
-
-	void deimos_d_fuse_destroy (void *);
+	//void deimos_d_fuse_destroy (void *);
 
 	int deimos_d_fuse_access (const char *, int);
 
@@ -282,7 +294,7 @@ extern (C) {
 
 	int deimos_d_fuse_utimens (const char *, const struct timespec tv[2]);
 
-	int deimos_d_fuse_bmap (const char *, size_t blocksize, uint64_t *idx);
+	int deimos_d_fuse_bmap (const char *, size_t blocksize, ulong *idx);
 	unsigned int flags;
 
 	int deimos_d_fuse_ioctl (const char *, int cmd, void *arg,
@@ -290,4 +302,5 @@ extern (C) {
 
 	int deimos_d_fuse_poll (const char *, struct fuse_file_info *,
 			struct fuse_pollhandle *ph, unsigned *reventsp);
+*/
 }
