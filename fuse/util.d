@@ -97,9 +97,9 @@ T[] cArray2DArray(T)(T* c_arr, size_t length) {
 unittest {
 	int[] arr=new int[](8);
 	d_array!int myarr;
-	my_arr.length=8;
-	my_arr.ptr=arr.ptr;
-	assert((my_arr.arr is arr) && myarr.arr.length==8);  // Check that length is really the length and not the size in bytes.
+	myarr.length=8;
+	myarr.ptr=arr.ptr;
+	assert((myarr.arr is arr) && myarr.arr.length==8);  // Check that length is really the length and not the size in bytes.
 }
 
 void main() {
