@@ -1,6 +1,7 @@
 import fuse.util;
 import fuse.fuse_impl;
 import std.bitmanip;
+import core.stdc.config;
 public import fuse.c_defs;
 
 /**
@@ -427,15 +428,7 @@ extern(C) {
 		int flags;
 
 		/** Old file handle, don't use */
-		version(X86) {
-			uint fh_old;
-		}
-		else version(X86_64) {
-			ulong fh_old;
-		} else {
-			pragma(msg, "Unsupported architecture");
-			static assert(0);
-		}
+		c_ulong fh_old;
 
 
 		/** In case of a write operation indicates if this was caused by a
