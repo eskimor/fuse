@@ -33,5 +33,15 @@ int main(int argc, char** argv) {
 	createAliasDef(gid_t);
 	createAliasDef(dev_t);
 	createAliasDef(ino_t);
+	createAliasDef(__ino_t);
+	createAliasDef(__dev_t);
+	createAliasDef(__mode_t);
+	createAliasDef(__nlink_t);
+	createAliasDef(__mode_t);
+	createAliasDef(__uid_t);
+	createAliasDef(__gid_t);
+	createAliasDef(__off64_t);
+	createAliasDef(__blksize_t);
+	createAliasDef(__blkcnt64_t);
 	return 0;
 }
