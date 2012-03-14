@@ -244,13 +244,13 @@ extern (C) {
 	int deimos_d_fuse_write (const char *, const char *, size_t, off_t,
 			struct fuse_file_info *);
 
-	int deimos_d_fuse_statfs (const char *, struct statvfs *);
+	int deimos_d_fuse_statfs (const char *, statvfs *);
 
-	int deimos_d_fuse_flush (const char *, struct fuse_file_info *);
+	int deimos_d_fuse_flush (const char *, fuse_file_info *);
 
-	int deimos_d_fuse_release (const char *, struct fuse_file_info *);
+	int deimos_d_fuse_release (const char *, fuse_file_info *);
 
-	int deimos_d_fuse_fsync (const char *, int, struct fuse_file_info *);
+	int deimos_d_fuse_fsync (const char *, int, fuse_file_info *);
 
 
 	int deimos_d_fuse_setxattr (const char *, const char *, const char *, size_t, int);
@@ -264,40 +264,40 @@ extern (C) {
 
 	int deimos_d_fuse_removexattr (const char *, const char *);
 
-	int deimos_d_fuse_opendir (const char *, struct fuse_file_info *);
+	int deimos_d_fuse_opendir (const char *, fuse_file_info *);
 
 	int deimos_d_fuse_readdir (const char *, void *, fuse_fill_dir_t, off_t,
-			struct fuse_file_info *);
+			fuse_file_info *);
 
-	int deimos_d_fuse_releasedir (const char *, struct fuse_file_info *);
+	int deimos_d_fuse_releasedir (const char *, fuse_file_info *);
 
-	int deimos_d_fuse_fsyncdir (const char *, int, struct fuse_file_info *);
+	int deimos_d_fuse_fsyncdir (const char *, int, fuse_file_info *);
 
-	//void* deimos_d_fuse_init (struct fuse_conn_info *conn) {
+	//void* deimos_d_fuse_init (fuse_conn_info *conn) {
 	//}
 
 	//void deimos_d_fuse_destroy (void *);
 
 	int deimos_d_fuse_access (const char *, int);
 
-	int deimos_d_fuse_create (const char *, mode_t, struct fuse_file_info *);
+	int deimos_d_fuse_create (const char *, mode_t, fuse_file_info *);
 
-	int deimos_d_fuse_ftruncate (const char *, off_t, struct fuse_file_info *);
+	int deimos_d_fuse_ftruncate (const char *, off_t, fuse_file_info *);
 
-	int deimos_d_fuse_fgetattr (const char *, struct stat *, struct fuse_file_info *);
+	int deimos_d_fuse_fgetattr (const char *, stat *, fuse_file_info *);
 
-	int deimos_d_fuse_lock (const char *, struct fuse_file_info *, int cmd,
-			struct flock *);
+	int deimos_d_fuse_lock (const char *, fuse_file_info *, int cmd,
+			flock *);
 
-	int deimos_d_fuse_utimens (const char *, const struct timespec tv[2]);
+	int deimos_d_fuse_utimens (const char *, const timespec tv[2]);
 
 	int deimos_d_fuse_bmap (const char *, size_t blocksize, ulong *idx);
 	unsigned int flags;
 
 	int deimos_d_fuse_ioctl (const char *, int cmd, void *arg,
-			struct fuse_file_info *, unsigned int flags, void *data);
+			fuse_file_info *, unsigned int flags, void *data);
 
-	int deimos_d_fuse_poll (const char *, struct fuse_file_info *,
-			struct fuse_pollhandle *ph, unsigned *reventsp);
+	int deimos_d_fuse_poll (const char *, fuse_file_info *,
+			fuse_pollhandle *ph, unsigned *reventsp);
 */
 }
