@@ -1,4 +1,5 @@
 #!/usr/bin/rdmd -unittest 
+module fuse.util;
 import std.stdio;
 import std.traits;
 import std.c.string;
@@ -100,7 +101,4 @@ unittest {
 	myarr.length=8;
 	myarr.ptr=arr.ptr;
 	assert((myarr.arr is arr) && myarr.arr.length==8);  // Check that length is really the length and not the size in bytes.
-}
-
-void main() {
 }

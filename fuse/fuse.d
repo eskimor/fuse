@@ -1,3 +1,4 @@
+module fuse.fuse;
 import fuse.util;
 import fuse.fuse_impl;
 import std.bitmanip;
@@ -113,8 +114,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int write (const(char)[] path, const(char)[] data, off_t=0;
-			fuse_file_info *);
+	int write (const(char)[] path, const(char)[] data, off_t, fuse_file_info *);
 
 	/** Get file system statistics
 	 *
@@ -349,8 +349,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int lock (const(char)[] path, fuse_file_info *, int cmd=0;
-			flock *);
+	int lock (const(char)[] path, fuse_file_info *, int cmd, flock *);
 
 	/**
 	 * Change the access and modification times of a file with
@@ -382,8 +381,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.8
 	 */
-	int ioctl (const(char)[] path, int cmd, void *arg,
-			fuse_file_info *, unsigned int flags, void *data);
+	int ioctl (const(char)[] path, int cmd, void *arg, fuse_file_info *, uint flags, void *data);
 
 	/**
 	 * Poll for IO readiness events
@@ -420,7 +418,7 @@ int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 	fuse_main_real(c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
 }
 extern(C) {
-	alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino);
+	alias int function (fuse_dirh_t h, const char *name, int type, ino_t ino) fuse_fill_dir_t;
 	extern struct fuse_dirhandle;
 	alias fuse_dirhandle* fuse_dirh_t;
 	struct fuse_file_info {
@@ -453,7 +451,7 @@ extern(C) {
 	// direct_io:1, keep_cache:0, flushe:1, nonseekable:0
 	extern int bit_field_check_fuse_file_info(fuse_file_info* test); 
 	unittest {
-		assert(fuse_file_info.sizeof==c_get_fuse_file_info_size()));
+		assert(fuse_file_info.sizeof==c_get_fuse_file_info_size());
 		fuse_file_info my_info;
 		with(my_info) {
 			direct_io=1;
@@ -464,4 +462,3 @@ extern(C) {
 		assert(bit_field_check_fuse_file_info(&my_info));
 	}
 }
-

@@ -1,9 +1,8 @@
 module fuse.fuse_impl;
-import fuse.fuse;
-import fuse.c_defs;
+import fuse_module=fuse.fuse;
+import fuse_c_defs=fuse.c_defs;
 
-package:
-FuseOperationsInterface current_fuse_interface;
+package: 
 extern (C) {
 	// Forward declarations:
 	extern struct fuse;
@@ -11,7 +10,7 @@ extern (C) {
 	extern int fuse_main_real(int argc, const(char*)* argv, const fuse_operations *op,
 		   size_t op_size, void *user_data);
 
-	extern struct fuse_context *fuse_get_context(void);
+	extern fuse_context *fuse_get_context();
 
 	struct fuse_operations {
 		int function (const char *, stat *) getattr;
@@ -109,11 +108,9 @@ extern (C) {
 
 		uint flags;
 
-		int function (const char *, int cmd, void *arg,
-				fuse_file_info *, unsigned int flags, void *data) ioctl;
+		int function (const char *, int cmd, void *arg,	fuse_file_info *, uint flags, void *data) ioctl;
 
-		int function (const char *, fuse_file_info *,
-				fuse_pollhandle *ph, unsigned *reventsp) poll;
+		int function (const char *, fuse_file_info *, fuse_pollhandle *ph, unsigned *reventsp) poll;
 	};
 	/** Extra context that may be needed by some filesystems
 	 *
@@ -197,8 +194,8 @@ extern (C) {
 	}
 
 	int deimos_d_fuse_getattr (const char * path, stat * info) {
-		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
-		return ops->getattr(cString2DString(path), info);
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.getattr(cString2DString(path), info);
 	}
 /*
 	int deimos_d_fuse_readlink (const char *, char *, size_t);
@@ -233,15 +230,15 @@ extern (C) {
 
 	int deimos_d_fuse_utime (const char *, struct utimbuf *);
 */
-	int deimos_d_fuse_open (const char * path, struct fuse_file_info * info) {
-		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
-		return ops->open(cString2DString(path), info);
+	int deimos_d_fuse_open (const char * path, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.open(cString2DString(path), info);
 	}
 
 	int deimos_d_fuse_read (const char * path, ubyte * data , size_t data_length, 
 			off_t offset, fuse_file_info * info) {
-		auto ops=cast(FuseOperationsInterface)fuse_get_context()->private_data;
-		return ops->read(cString2DString(path), cArray2DArray!ubyte(data, data_length), offset, info);
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.read(cString2DString(path), cArray2DArray!ubyte(data, data_length), offset, info);
 	}
 /*
 	int deimos_d_fuse_write (const char *, const char *, size_t, off_t,
