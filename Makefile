@@ -1,6 +1,6 @@
 .phony: all
-all: fuse/c_defs.d
-c_util/provideCTypesDefs: c_util/provideCsTypeDefs.cc
-	g++ c_util/provideCsTypeDefs.cc -o c_util/provideCTypesDefs -D_FILE_OFFSET_BITS=64
-fuse/c_defs.d: c_util/provideCTypesDefs
-	${PWD}/c_util/provideCTypesDefs ${PWD}/c_util/header fuse/c_defs.d
+all: c/sys/c_defs.d
+c_util/provideCsTypeDefs: c_util/provideCsTypeDefs.cc
+	g++ c_util/provideCsTypeDefs.cc -o c_util/provideCsTypeDefs -D_FILE_OFFSET_BITS=64
+c/sys/c_defs.d: c_util/provideCsTypeDefs
+	${PWD}/c_util/provideCsTypeDefs ${PWD}/c_util/header c/sys/c_defs.d

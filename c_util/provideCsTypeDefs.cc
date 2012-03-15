@@ -43,5 +43,18 @@ int main(int argc, char** argv) {
 	createAliasDef(__off64_t);
 	createAliasDef(__blksize_t);
 	createAliasDef(__blkcnt64_t);
+#ifdef __USE_FILE_OFFSET64
+	out<<"version=__USE_FILE_OFFSET64;"<<std::endl;
+	out<<"version(__USE_FILE_OFFSET64) {\nenum __USE_FILE_OFFSET64=true;\n}\nelse {\nenum __USE_FILE_OFFSET64=false;\n}"<<std::endl;
+#endif
+#ifdef __WORDSIZE
+	out<<"enum __WORDSIZE="<<__WORDSIZE<<";"<<std::endl;
+#endif
+#ifdef __USE_MISC
+	out<<"version=__USE_MISC;"<<std::endl;
+#endif
+#ifdef __USE_XOPEN2K8
+	out<<"version=__USE_XOPEN2K8;"<<std::endl;
+#endif
 	return 0;
 }

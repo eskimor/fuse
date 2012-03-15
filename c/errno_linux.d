@@ -3,7 +3,7 @@
 cp /usr/include/asm-generic/errno.h ./
 wine htod.exe errno.h -I/usr/include -hs
 */
-module fuse.errno_linux;
+module c.errno_linux;
 //C     #ifndef _ASM_GENERIC_ERRNO_H
 //C     #define _ASM_GENERIC_ERRNO_H
 

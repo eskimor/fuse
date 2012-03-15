@@ -1,4 +1,4 @@
-module fuse.errno;
+module c.errno;
 version(linux) {
 	public import fuse.errno_linux;
 }
