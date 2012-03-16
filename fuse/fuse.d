@@ -3,7 +3,10 @@ import fuse.util;
 import fuse.fuse_impl;
 import std.bitmanip;
 import core.stdc.config;
+public import c.sys.stat;
+public import c.sys.statvfs;
 public import c.sys.c_defs;
+public import c.errno;
 
 /**
  * Main interface you have to implement for a fuse filesystem.
@@ -21,7 +24,7 @@ interface FuseOperationsInterface {
 	 * ignored.	 The 'st_ino' field is ignored except if the 'use_ino'
 	 * mount option is given.
 	 */
-	int getattr (const(char)[] path, stat* stbuf);
+	int getattr (const(char)[] path, struct_stat* stbuf);
 
 	/** Read the target of a symbolic link
 	 *
@@ -123,7 +126,7 @@ interface FuseOperationsInterface {
 	 * Replaced 'struct statfs' parameter with 'struct statvfs' in
 	 * version 2.5
 	 */
-	int statfs (const(char)[] path, statvfs *);
+	int statfs (const(char)[] path, struct_statvfs *);
 
 	/** Possibly flush cached data
 	 *
@@ -315,7 +318,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int fgetattr (const(char)[] path, stat *, fuse_file_info *);
+	int fgetattr (const(char)[] path, struct_stat *, fuse_file_info *);
 
 	/**
 	 * Perform POSIX file locking operation
@@ -400,7 +403,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.8
 	 */
-	int poll (const(char)[] path, fuse_file_info *,	fuse_pollhandle *ph, unsigned *reventsp);
+	int poll (const(char)[] path, fuse_file_info *,	fuse_pollhandle *ph, uint *reventsp);
 };
 
 /**
@@ -419,92 +422,11 @@ int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 }
 extern(C) {
 	//alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino); // Don't know where I have got this definition from, but it is wrong.
-	alias int function (void* buf, const char* name, const stat* stbuf, off_t offset) fuse_fill_dir_t;
+	alias int function (void* buf, const char* name, const struct_stat* stbuf, off_t offset) fuse_fill_dir_t;
 	extern struct fuse_dirhandle;
-	alias fuse_dirhandle* fuse_dirh_t;
-	struct stat
-	{
-		__dev_t st_dev;		/* Device.  */
-		static if(__WORDSIZE == 32) {
-			ushort __pad1;
-		}
+	extern struct fuse_pollhandle;
+	alias fuse_dirhandle* fuse_fill_dir_t;
 
-		static if (__WORDSIZE == 64 || ! __USE_FILE_OFFSET64) { 
-			__ino_t st_ino;		/* File serial number.	*/
-		}
-		else {
-			__ino_t __st_ino;			/* 32bit file serial number.	*/
-		}
-		static if (__WORDSIZE == 32 ) {
-			__mode_t st_mode;			/* File mode.  */
-			__nlink_t st_nlink;			/* Link count.  */
-		}
-		else {
-			__nlink_t st_nlink;		/* Link count.  */
-			__mode_t st_mode;		/* File mode.  */
-		}
-		__uid_t st_uid;		/* User ID of the file's owner.	*/
-		__gid_t st_gid;		/* Group ID of the file's group.*/
-		static if (__WORDSIZE == 64) {
-			int __pad0;
-		}
-		__dev_t st_rdev;		/* Device number, if device.  */
-		static if(__WORDSIZE==32) {
-			ushort __pad2;
-		}
-		static if (__WORDSIZE == 64 || ! __USE_FILE_OFFSET64) { 
-			__off_t st_size;			/* Size of file, in bytes.  */
-		}
-		else {
-			__off64_t st_size;			/* Size of file, in bytes.  */
-		}
-		__blksize_t st_blksize;	/* Optimal block size for I/O.  */
-		static if (__WORDSIZE == 64 || ! __USE_FILE_OFFSET64) { 
-			__blkcnt_t st_blocks;		/* Number 512-byte blocks allocated. */
-		}
-		else {
-			__blkcnt64_t st_blocks;		/* Number 512-byte blocks allocated. */
-		}
-		version(__USE_MISC) {
-			version=DO_TIMESPEC_STUFF;
-		}
-		version(__USE_XOPEN2K8) {
-			version=DO_TIMESPEC_STUFF;
-		}
-		version(DO_TIMESPEC_STUFF) {
-		/* Nanosecond resolution timestamps are stored in a format
-		   equivalent to 'struct timespec'.  This is the type used
-		   whenever possible but the Unix namespace rules do not allow the
-		   identifier 'timespec' to appear in the <sys/stat.h> header.
-		   Therefore we have to handle the use of this header in strictly
-		   standard-compliant sources special.  */
-		timespec st_atim;		/* Time of last access.  */
-		timespec st_mtim;		/* Time of last modification.  */
-		timespec st_ctim;		/* Time of last status change.  */
-		alias st_atim.tv_sec st_atime; //Backward compatibility.
-		alias st_mtim.tv_sec st_mtime;
-		alias st_ctim.tv_sec st_ctime;
-		}
-		else {
-		__time_t st_atime;			/* Time of last access.  */
-			c_ulong st_atimensec;	/* Nscecs of last access.  */
-		__time_t st_mtime;			/* Time of last modification.  */
-		c_ulong st_mtimensec;	/* Nsecs of last modification.  */
-		__time_t st_ctime;			/* Time of last status change.  */
-		c_ulong st_ctimensec;	/* Nsecs of last status change.  */
-		}
-
-		static if( __WORDSIZE == 64) {
-		c_long __unused[3];
-		}
-		else static if(__USE_FILE_OFFSET64) {
-		c_ulong __unused4;
-		c_ulong __unused5;
-		}
-		else {
-		__ino64_t st_ino;			/* File serial number.	*/
-		}
-	};
 	struct fuse_file_info {
 		/** Open flags.	 Available in open() and release() */
 		int flags;

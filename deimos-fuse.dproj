@@ -34,14 +34,23 @@
     <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
     <ExtraCompilerArguments>-unittest </ExtraCompilerArguments>
     <OutputName>deimos-fuse</OutputName>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="BeforeBuild" command="make" workingdir="${ProjectDir}" />
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="fuse\c_defs.d" />
-    <Compile Include="fuse\errno.d" />
-    <Compile Include="fuse\errno_linux.d" />
     <Compile Include="fuse\fuse.d" />
     <Compile Include="fuse\fuse_impl.d" />
     <Compile Include="fuse\util.d" />
     <Compile Include="examples\hello.d" />
+    <Compile Include="c\errno.d" />
+    <Compile Include="c\errno_linux.d" />
+    <Compile Include="c\sys\wordsize.d" />
+    <Compile Include="c\sys\stat.d" />
+    <Compile Include="c\sys\statvfs.d" />
+    <Compile Include="fuse\struct_checks.c" />
   </ItemGroup>
 </Project>

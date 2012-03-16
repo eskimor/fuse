@@ -1,9 +1,13 @@
 module fuse.fuse_impl;
 import fuse_module=fuse.fuse;
-import fuse_c_defs=fuse.c_defs;
+import c.sys.c_defs;
+import c.sys.stat;
+import c.sys.statvfs;
 
 package: 
 extern (C) {
+	alias void* fuse_dirfil_t; // Not correct, but it is deprecated anyway.
+	alias void* fuse_dirh_t; // Not correct but deprecated anyway.
 	// Forward declarations:
 	extern struct fuse;
 	// Main entry point:
@@ -13,7 +17,7 @@ extern (C) {
 	extern fuse_context *fuse_get_context();
 
 	struct fuse_operations {
-		int function (const char *, stat *) getattr;
+		int function (const char *, struct_stat *) getattr;
 
 		int function (const char *, char *, size_t) readlink;
 
@@ -58,7 +62,7 @@ extern (C) {
 		int function (const char *, const char *, size_t, off_t,
 				fuse_file_info *) write;
 
-		int function (const char *, statvfs *) statfs;
+		int function (const char *, struct_statvfs *) statfs;
 
 		int function (const char *, fuse_file_info *) flush;
 
@@ -97,7 +101,7 @@ extern (C) {
 
 		int function (const char *, off_t, fuse_file_info *) ftruncate;
 
-		int function (const char *, stat *, fuse_file_info *) fgetattr;
+		int function (const char *, struct_stat *, fuse_file_info *) fgetattr;
 
 		int function (const char *, fuse_file_info *, int cmd,
 				flock *) lock;
@@ -110,7 +114,7 @@ extern (C) {
 
 		int function (const char *, int cmd, void *arg,	fuse_file_info *, uint flags, void *data) ioctl;
 
-		int function (const char *, fuse_file_info *, fuse_pollhandle *ph, unsigned *reventsp) poll;
+		int function (const char *, fuse_file_info *, fuse_pollhandle *ph, uint *reventsp) poll;
 	};
 	/** Extra context that may be needed by some filesystems
 	 *
@@ -193,7 +197,7 @@ extern (C) {
 		uint[25] reserved;
 	}
 
-	int deimos_d_fuse_getattr (const char * path, stat * info) {
+	int deimos_d_fuse_getattr (const char * path, struct_stat * info) {
 		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
 		return ops.getattr(cString2DString(path), info);
 	}
@@ -244,7 +248,7 @@ extern (C) {
 	int deimos_d_fuse_write (const char *, const char *, size_t, off_t,
 			struct fuse_file_info *);
 
-	int deimos_d_fuse_statfs (const char *, statvfs *);
+	int deimos_d_fuse_statfs (const char *, struct_statvfs *);
 
 	int deimos_d_fuse_flush (const char *, fuse_file_info *);
 
@@ -284,7 +288,7 @@ extern (C) {
 
 	int deimos_d_fuse_ftruncate (const char *, off_t, fuse_file_info *);
 
-	int deimos_d_fuse_fgetattr (const char *, stat *, fuse_file_info *);
+	int deimos_d_fuse_fgetattr (const char *, struct_stat *, fuse_file_info *);
 
 	int deimos_d_fuse_lock (const char *, fuse_file_info *, int cmd,
 			flock *);

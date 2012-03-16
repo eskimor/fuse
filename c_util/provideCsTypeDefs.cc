@@ -37,12 +37,18 @@ int main(int argc, char** argv) {
 	createAliasDef(__dev_t);
 	createAliasDef(__mode_t);
 	createAliasDef(__nlink_t);
-	createAliasDef(__mode_t);
 	createAliasDef(__uid_t);
 	createAliasDef(__gid_t);
 	createAliasDef(__off64_t);
+	createAliasDef(__off_t);
+	createAliasDef(__blkcnt_t);
+	createAliasDef(__fsfilcnt64_t);
 	createAliasDef(__blksize_t);
 	createAliasDef(__blkcnt64_t);
+	createAliasDef(__time_t);
+	createAliasDef(__fsblkcnt_t);
+	createAliasDef(__fsblkcnt64_t);
+	createAliasDef(time_t);
 #ifdef __USE_FILE_OFFSET64
 	out<<"version=__USE_FILE_OFFSET64;"<<std::endl;
 	out<<"version(__USE_FILE_OFFSET64) {\nenum __USE_FILE_OFFSET64=true;\n}\nelse {\nenum __USE_FILE_OFFSET64=false;\n}"<<std::endl;
