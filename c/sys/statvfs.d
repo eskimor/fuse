@@ -1,6 +1,7 @@
 module c.sys.statvfs;
 import core.stdc.config;
 import c.sys.c_defs;
+import core.sys.posix.sys.types;
 
 extern (C) {
 	static if(__WORDSIZE == 32) {
@@ -8,7 +9,7 @@ extern (C) {
 	}
 
 
-	struct struct_statvfs
+	struct statvfs_t
 	{
 		c_ulong f_bsize;
 		c_ulong f_frsize;
@@ -39,5 +40,5 @@ extern (C) {
 	extern size_t c_get_statvfs_size();
 }
 unittest {
-	assert(struct_statvfs.sizeof==c_get_statvfs_size());
+	assert(statvfs_t.sizeof==c_get_statvfs_size());
 }

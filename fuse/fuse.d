@@ -3,11 +3,15 @@ import fuse.util;
 import fuse.fuse_impl;
 import std.bitmanip;
 import core.stdc.config;
-public import c.sys.stat;
+import core.sys.posix.sys.types;
 public import c.sys.statvfs;
 public import c.sys.c_defs;
-public import c.errno;
-
+public import core.stdc.errno;
+//public import core.sys.posix.sys.stat; -> not correct on 64 bit systems
+public import c.sys.stat;
+public import core.sys.posix.time;
+import c.sys.fcntl;
+//import core.sys.posix.fcntl; --> can't be used imports Ds stat
 /**
  * Main interface you have to implement for a fuse filesystem.
  * Usually you won't derive from this interface directly but instead from 
@@ -24,7 +28,7 @@ interface FuseOperationsInterface {
 	 * ignored.	 The 'st_ino' field is ignored except if the 'use_ino'
 	 * mount option is given.
 	 */
-	int getattr (const(char)[] path, struct_stat* stbuf);
+	int getattr (const(char)[] path, stat_t* stbuf);
 
 	/** Read the target of a symbolic link
 	 *
@@ -34,7 +38,7 @@ interface FuseOperationsInterface {
 	 * buffer, it should be truncated.	The return value should be 0
 	 * for success.
 	 */
-	int readlink (const(char)[] path, char[] buf);
+	int readlink (const(char)[] path, ubyte[] buf);
 
 	/** Create a file node
 	 *
@@ -106,7 +110,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int read (const(char)[] path, char[] readbuf, off_t offset,
+	int read (const(char)[] path, ubyte[] readbuf, off_t offset,
 			fuse_file_info * info );
 
 	/** Write data to an open file
@@ -117,7 +121,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int write (const(char)[] path, const(char)[] data, off_t, fuse_file_info *);
+	int write (const(char)[] path, const(ubyte)[] data, off_t, fuse_file_info *);
 
 	/** Get file system statistics
 	 *
@@ -126,7 +130,7 @@ interface FuseOperationsInterface {
 	 * Replaced 'struct statfs' parameter with 'struct statvfs' in
 	 * version 2.5
 	 */
-	int statfs (const(char)[] path, struct_statvfs *);
+	int statfs (const(char)[] path, statvfs_t *);
 
 	/** Possibly flush cached data
 	 *
@@ -318,7 +322,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int fgetattr (const(char)[] path, struct_stat *, fuse_file_info *);
+	int fgetattr (const(char)[] path, stat_t *, fuse_file_info *);
 
 	/**
 	 * Perform POSIX file locking operation
@@ -409,23 +413,32 @@ interface FuseOperationsInterface {
 /**
  * Derive from FuseOperations, if you want to have predefined methods, which simply spit out a not implemented error.
 */ 
+import std.stdio;
 mixin(createImplementation!(FuseOperationsInterface, "FuseOperations")());
+//void main() {
+	//writefln("Created impl:\n%s", createImplementation!(FuseOperationsInterface, "FuseOperations")());
+//}
 
 
 int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
-	current_fuse_interface=operations;
-	const(char*)[] c_args=new const(char*)[](args.length);
+	const(char)*[] c_args=new const(char)*[](args.length);
 	foreach(i, arg; args) 
 		c_args[i]=arg.ptr;
-	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "my_")());
-	fuse_main_real(c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
+	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_")());
+	debug(fuse) writefln("Initialize struct: ");
+	debug(fuse) writefln(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_")());
+	
+	assert(my_operations.getattr==&deimos_d_fuse_getattr);
+	assert(my_operations.read==&deimos_d_fuse_read);
+	assert(my_operations.readdir==&deimos_d_fuse_readdir);
+	return fuse_main_real(cast(int)c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
 }
+alias int function (void* buf, const char* name, const stat_t* stbuf, off_t offset) fuse_fill_dir_t;	
 extern(C) {
 	//alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino); // Don't know where I have got this definition from, but it is wrong.
-	alias int function (void* buf, const char* name, const struct_stat* stbuf, off_t offset) fuse_fill_dir_t;
 	extern struct fuse_dirhandle;
 	extern struct fuse_pollhandle;
-	alias fuse_dirhandle* fuse_fill_dir_t;
+	//alias fuse_fill_dir_t* fuse_dirhandle;
 
 	struct fuse_file_info {
 		/** Open flags.	 Available in open() and release() */
@@ -463,7 +476,7 @@ extern(C) {
 			direct_io=1;
 			keep_cache=0;
 			flush=1;
-			nonseekable=0;
+			unseekable=0;
 		}
 		assert(bit_field_check_fuse_file_info(&my_info));
 	}

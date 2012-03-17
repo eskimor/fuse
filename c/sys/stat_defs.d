@@ -10,12 +10,14 @@ const __S_IFMT = octal!170000;
 //C     #define __S_IFDIR       octal!40000 /* Directory.  */
 //C     #define __S_IFCHR       octal!20000 /* Character device.  */
 const __S_IFDIR = octal!40000;
+alias __S_IFDIR S_IFDIR;
 //C     #define __S_IFBLK       octal!60000 /* Block device.  */
 const __S_IFCHR = octal!20000;
 //C     #define __S_IFREG       octal!100000 /* Regular file.  */
 const __S_IFBLK = octal!60000;
 //C     #define __S_IFIFO       octal!10000 /* FIFO.  */
 const __S_IFREG = octal!100000;
+alias __S_IFREG S_IFREG;
 //C     #define __S_IFLNK       octal!120000 /* Symbolic link.  */
 const __S_IFIFO = octal!10000;
 //C     #define __S_IFSOCK      octal!140000 /* Socket.  */

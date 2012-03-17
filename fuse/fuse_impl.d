@@ -1,25 +1,34 @@
 module fuse.fuse_impl;
-import fuse_module=fuse.fuse;
+//import fuse_module=fuse.fuse;
+import fuse.fuse;
+import core.sys.posix.sys.types;
+//import fuse.fuse : fuse_file_info;
+//import fuse.fuse : fuse_fill_dir_t, utimbuf, fuse_pollhandle;
 import c.sys.c_defs;
-import c.sys.stat;
+//import c.sys.stat;
 import c.sys.statvfs;
+import fuse.util;
+//public import c.sys.fcntl;
+import c.sys.fcntl;
+import core.sys.posix.utime;
+
 
 package: 
 extern (C) {
 	alias void* fuse_dirfil_t; // Not correct, but it is deprecated anyway.
 	alias void* fuse_dirh_t; // Not correct but deprecated anyway.
 	// Forward declarations:
-	extern struct fuse;
+	extern struct struct_fuse; // Renamed to avoid name clashes.
 	// Main entry point:
-	extern int fuse_main_real(int argc, const(char*)* argv, const fuse_operations *op,
+	extern int fuse_main_real(int argc, const(char)** argv, const fuse_operations *op,
 		   size_t op_size, void *user_data);
 
 	extern fuse_context *fuse_get_context();
 
 	struct fuse_operations {
-		int function (const char *, struct_stat *) getattr;
+		int function (const char *, stat_t *) getattr;
 
-		int function (const char *, char *, size_t) readlink;
+		int function (const char *, ubyte *, size_t) readlink;
 
 		/* Deprecated, use readdir() instead */
 		int function (const char *, fuse_dirh_t, fuse_dirfil_t) getdir;
@@ -56,13 +65,13 @@ extern (C) {
 
 		int function (const char *, fuse_file_info *) open;
 
-		int function (const char *, char *, size_t, off_t,
+		int function (const char *, ubyte *, size_t, off_t,
 				fuse_file_info *) read;
 
-		int function (const char *, const char *, size_t, off_t,
+		int function (const char *, const ubyte *, size_t, off_t,
 				fuse_file_info *) write;
 
-		int function (const char *, struct_statvfs *) statfs;
+		int function (const char *, statvfs_t *) statfs;
 
 		int function (const char *, fuse_file_info *) flush;
 
@@ -101,7 +110,7 @@ extern (C) {
 
 		int function (const char *, off_t, fuse_file_info *) ftruncate;
 
-		int function (const char *, struct_stat *, fuse_file_info *) fgetattr;
+		int function (const char *, stat_t *, fuse_file_info *) fgetattr;
 
 		int function (const char *, fuse_file_info *, int cmd,
 				flock *) lock;
@@ -123,7 +132,7 @@ extern (C) {
 	 */
 	struct fuse_context {
 		/** Pointer to the fuse object */
-		fuse *fuse;
+		struct_fuse *fuse;
 
 		/** User ID of the calling process */
 		uid_t uid;
@@ -197,7 +206,7 @@ extern (C) {
 		uint[25] reserved;
 	}
 
-	int deimos_d_fuse_getattr (const char * path, struct_stat * info) {
+	int deimos_d_fuse_getattr (const char * path, stat_t * info) {
 		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
 		return ops.getattr(cString2DString(path), info);
 	}
@@ -248,7 +257,7 @@ extern (C) {
 	int deimos_d_fuse_write (const char *, const char *, size_t, off_t,
 			struct fuse_file_info *);
 
-	int deimos_d_fuse_statfs (const char *, struct_statvfs *);
+	int deimos_d_fuse_statfs (const char *, statvfs_t *);
 
 	int deimos_d_fuse_flush (const char *, fuse_file_info *);
 
@@ -269,10 +278,13 @@ extern (C) {
 	int deimos_d_fuse_removexattr (const char *, const char *);
 
 	int deimos_d_fuse_opendir (const char *, fuse_file_info *);
-
-	int deimos_d_fuse_readdir (const char *, void *, fuse_fill_dir_t, off_t,
-			fuse_file_info *);
-
+*/
+	int deimos_d_fuse_readdir (const char * path, void * data , fuse_fill_dir_t filler, off_t offset,
+	fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.readdir(cString2DString(path), data, filler, offset, info);
+	}
+/*
 	int deimos_d_fuse_releasedir (const char *, fuse_file_info *);
 
 	int deimos_d_fuse_fsyncdir (const char *, int, fuse_file_info *);
@@ -288,7 +300,7 @@ extern (C) {
 
 	int deimos_d_fuse_ftruncate (const char *, off_t, fuse_file_info *);
 
-	int deimos_d_fuse_fgetattr (const char *, struct_stat *, fuse_file_info *);
+	int deimos_d_fuse_fgetattr (const char *, stat_t *, fuse_file_info *);
 
 	int deimos_d_fuse_lock (const char *, fuse_file_info *, int cmd,
 			flock *);

@@ -52,5 +52,6 @@
     <Compile Include="c\sys\stat.d" />
     <Compile Include="c\sys\statvfs.d" />
     <Compile Include="fuse\struct_checks.c" />
+    <Compile Include="c\sys\fcntl.d" />
   </ItemGroup>
 </Project>

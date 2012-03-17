@@ -6,7 +6,7 @@ import std.c.string;
 
 
 string createImplementation(ClassType, string classname)(){
-	string results="import std.stdio;\nimport fuse.errno;\nclass "~ classname~" : "~ClassType.stringof~" {\n";
+	string results="import std.stdio;\nimport core.stdc.errno;\nclass "~ classname~" : "~ClassType.stringof~" {\n";
 	foreach(member ; __traits(allMembers, ClassType)) {
 		foreach(method; __traits(getVirtualMethods, ClassType, member))	 {
 			enum name=__traits(identifier, method);
@@ -17,6 +17,8 @@ string createImplementation(ClassType, string classname)(){
 `;
 			static if(is (return_type == int) )
 				results~="\t\treturn -ENOSYS;\n\t}\n";
+			else static if(is (return_type : void*) )
+				results~="\t\treturn null;\n\t}\n";
 			else
 				results~="\t}\n";
 			//writefln("Found method: %s", __traits(identifier, method));
@@ -30,6 +32,7 @@ unittest {
 		int test(ref string arg);
 		int test(out int a);
 		void test1(in const(char)* c);
+		int* test2(float* p);
 	}
 	enum buf=createImplementation!(MyInterface, "MyImplementation")();	
 	writefln("%s", buf);
@@ -90,7 +93,7 @@ const(char)[] cString2DString(const char* c_str) {
 }
 
 T[] cArray2DArray(T)(T* c_arr, size_t length) {
-	d_arary!(T) buf;
+	d_array!(T) buf;
 	buf.ptr=c_arr;
 	buf.length=length;
 	return buf.arr;
@@ -101,4 +104,5 @@ unittest {
 	myarr.length=8;
 	myarr.ptr=arr.ptr;
 	assert((myarr.arr is arr) && myarr.arr.length==8);  // Check that length is really the length and not the size in bytes.
+	assert(myarr.ptr==myarr.arr.ptr);
 }

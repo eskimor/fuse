@@ -27,11 +27,6 @@ int main(int argc, char** argv) {
 		}
 	}
 	const char* dtype;
-	createAliasDef(off_t);
-	createAliasDef(mode_t);
-	createAliasDef(uid_t);
-	createAliasDef(gid_t);
-	createAliasDef(dev_t);
 	createAliasDef(ino_t);
 	createAliasDef(__ino_t);
 	createAliasDef(__dev_t);
@@ -48,6 +43,8 @@ int main(int argc, char** argv) {
 	createAliasDef(__time_t);
 	createAliasDef(__fsblkcnt_t);
 	createAliasDef(__fsblkcnt64_t);
+	createAliasDef(__pid_t);
+	createAliasDef(uint64_t);
 	createAliasDef(time_t);
 #ifdef __USE_FILE_OFFSET64
 	out<<"version=__USE_FILE_OFFSET64;"<<std::endl;

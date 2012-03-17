@@ -2,14 +2,9 @@ module c.sys.stat;
 public import c.sys.c_defs;
 public import core.stdc.config;
 public import c.sys.stat_defs;
-extern (C) {
-struct timespec
-{
-	__time_t tv_sec;            /* Seconds.  */
-	c_long tv_nsec;           /* Nanoseconds.  */
-};
-
-struct struct_stat
+public import core.sys.posix.time;
+extern (C)  {
+struct stat_t
 {
 	__dev_t st_dev;		/* Device.  */
 	static if(__WORDSIZE == 32) {
@@ -95,5 +90,5 @@ struct struct_stat
 extern size_t c_get_stat_size();
 }
 unittest {
-	assert(c_get_stat_size()==stat.sizeof);
+	assert(c_get_stat_size()==stat_t.sizeof);
 }
