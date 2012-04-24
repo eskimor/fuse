@@ -8,8 +8,8 @@ import c.sys.c_defs;
 //import c.sys.stat;
 import c.sys.statvfs;
 import fuse.util;
-//public import c.sys.fcntl;
-import c.sys.fcntl;
+//import c.sys.fcntl;
+import core.sys.posix.fcntl;
 import core.sys.posix.utime;
 
 

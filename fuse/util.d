@@ -86,17 +86,19 @@ union d_array(T) {
 	T[] arr;
 }
 const(char)[] cString2DString(const char* c_str) {
-	d_array!(const char) buf;
-	buf.ptr=c_str;
-	buf.length=strlen(c_str);
-	return buf.arr;
+//	d_array!(const char) buf;
+//	buf.ptr=c_str;
+//	buf.length=strlen(c_str);
+	const(char)[] mystring=c_str[0..strlen(c_str)];
+	return mystring;
 }
 
 T[] cArray2DArray(T)(T* c_arr, size_t length) {
-	d_array!(T) buf;
-	buf.ptr=c_arr;
-	buf.length=length;
-	return buf.arr;
+//	d_array!(T) buf;
+//	buf.ptr=c_arr;
+//	buf.length=length;
+//	T[] my_arr=c_arr[0..length];
+	return c_arr[0..length];
 }
 unittest {
 	int[] arr=new int[](8);

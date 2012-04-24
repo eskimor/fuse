@@ -52,13 +52,13 @@ class HelloFs : FuseOperations {
 		if(path!=hello_path)
 			return -ENOENT;
 		writefln("Passed buf length: %s", readbuf.length);
-		size_t len = hello_str.length-offset;
+		size_t len = hello_str.length-cast(size_t)offset; // Cast save, hello world will never be larger than 2GB.
 		size_t until = len>readbuf.length ? readbuf.length : len;
 		if(offset<hello_str.length && offset>=0) {
 			writefln("Real length: %s, offset: %s, until: %s", until-offset, offset, until);
-			readbuf[0..(until-offset)]=cast(const(ubyte)[])hello_str[offset..until];
-			memcpy(readbuf.ptr, hello_str.ptr+offset, until-offset);
-			return cast(int)(until-offset);
+			readbuf[]=cast(const(ubyte)[])hello_str[(cast(size_t)offset)..until];
+			memcpy(readbuf.ptr, hello_str.ptr+cast(size_t)offset, until-cast(size_t)offset);
+			return cast(int)(until-cast(size_t)offset);
 		}
 		else
 			return 0;

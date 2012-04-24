@@ -7,11 +7,11 @@ import core.sys.posix.sys.types;
 public import c.sys.statvfs;
 public import c.sys.c_defs;
 public import core.stdc.errno;
-//public import core.sys.posix.sys.stat; -> not correct on 64 bit systems
-public import c.sys.stat;
+public import core.sys.posix.sys.stat; //-> not correct on 64 bit systems
+//public import c.sys.stat;
 public import core.sys.posix.time;
-import c.sys.fcntl;
-//import core.sys.posix.fcntl; --> can't be used imports Ds stat
+//import c.sys.fcntl;
+import core.sys.posix.fcntl; //--> can't be used imports Ds stat
 /**
  * Main interface you have to implement for a fuse filesystem.
  * Usually you won't derive from this interface directly but instead from 
@@ -463,7 +463,7 @@ extern(C) {
 		ulong fh;
 
 		/** Lock owner id.  Available in locking operations and flush */
-		uint lock_owner;
+		ulong lock_owner;
 	};
 	extern size_t c_get_fuse_file_info_size();
 	// Expectes the bitfield to be set this way:
