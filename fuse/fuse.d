@@ -430,8 +430,9 @@ int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 	assert(my_operations.readdir==&deimos_d_fuse_readdir);
 	return fuse_main_real(cast(int)c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
 }
-alias int function (void* buf, const char* name, const stat_t* stbuf, off_t offset) fuse_fill_dir_t;	
+
 extern(C) {
+	alias int function (void* buf, const char* name, const stat_t* stbuf, off_t offset) fuse_fill_dir_t;	
 	//alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino); // Don't know where I have got this definition from, but it is wrong.
 	extern struct fuse_dirhandle;
 	extern struct fuse_pollhandle;

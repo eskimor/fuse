@@ -3,16 +3,50 @@ module fuse.util;
 import std.stdio;
 import std.traits;
 import std.c.string;
-
-
+import std.conv;
+import std.string;
+private {
+	string flagsToString(T)(int val) {
+		string result;
+		foreach(m; EnumMembers!T) {
+			if(m==T.none)
+				continue;
+			if((val&m)!=0) {
+				result~=chomp(to!string(m), "_")~" ";
+			}
+		}
+		return result;
+	}
+}
 string createImplementation(ClassType, string classname)(){
-	string results="import std.stdio;\nimport core.stdc.errno;\nclass "~ classname~" : "~ClassType.stringof~" {\n";
+	string results;
+	string begin="import std.stdio;\nimport core.stdc.errno;\nclass "~ classname~" : "~ClassType.stringof~" {\n";
+	int alias_count=0;
+	string alias_defs;
 	foreach(member ; __traits(allMembers, ClassType)) {
 		foreach(method; __traits(getVirtualMethods, ClassType, member))	 {
 			enum name=__traits(identifier, method);
 			alias ReturnType!method return_type;
-			results~="\toverride "~return_type.stringof~" "~name~ParameterTypeTuple!method.stringof~
-`{
+			//results~="\toverride "~return_type.stringof~" "~name~ParameterTypeTuple!method.stringof~ // Not working for extern (C) function parameters.
+			results~="\toverride "~return_type.stringof~" "~name~"(";
+			
+			foreach(i, p; ParameterTypeTuple!method) {
+				results~=flagsToString!ParameterStorageClass(ParameterStorageClassTuple!method[i])~" ";
+				if("extern".length<p.stringof.length && "extern"==p.stringof[0.."extern".length]) {
+					alias_defs~="alias "~p.stringof~" work_around_"~to!string(alias_count)~";\n";
+					results~="work_around_"~to!string(alias_count)~",";
+					alias_count++;
+				}
+				else {
+					results~=p.stringof~",";
+				}
+			}
+			if(results[$-1]==',')
+				results=results[0..$-1]~')';
+			else
+				results~=')';
+			results~=" "~flagsToString!FunctionAttribute(functionAttributes!method);
+			results~=`{
 		writefln("Not implemented method called: %s", "`~name~`");
 `;
 			static if(is (return_type == int) )
@@ -25,14 +59,16 @@ string createImplementation(ClassType, string classname)(){
 		}	
 	}
 	results~="}";
-	return results;
+	return begin~alias_defs~results;
 }
 unittest {
 	interface MyInterface {
-		int test(ref string arg);
+		int test(ref string arg) const;
 		int test(out int a);
 		void test1(in const(char)* c);
 		int* test2(float* p);
+		alias extern (C) void function(int) type_t;
+		void testExtern(type_t t);
 	}
 	enum buf=createImplementation!(MyInterface, "MyImplementation")();	
 	writefln("%s", buf);

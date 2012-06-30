@@ -23,19 +23,13 @@ class HelloFs : FuseOperations {
 
 		return res;
 	}
-	union FixIt {
-		int function (void* buf, const char* name, const stat_t* stbuf, off_t offset) bug_fix;
-		extern (C) int function (void* buf, const char* name, const stat_t* stbuf, off_t offset) filler;
-	}
 	override int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info *) {
 		if(path!="/")
 			return -ENOENT;
-		FixIt it;
-		it.bug_fix=filler;
-		it.filler(buf, ".", null, 0);
-		it.filler(buf, "..", null, 0);
-		it.filler(buf, hello_path.ptr+1, null, 0);
-
+		
+		filler(buf, ".", null, 0);
+		filler(buf, "..", null, 0);
+		filler(buf, hello_path.ptr+1, null, 0);
 		return 0;
 	}
 	override int open (const(char)[] path, fuse_file_info * fi) {
