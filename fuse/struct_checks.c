@@ -9,9 +9,6 @@ size_t c_get_stat_size() {
 	return sizeof(struct stat);
 }
 
-size_t c_get_statvfs_size() {
-	return sizeof(struct statvfs); 
-}
 
 int bit_field_check_fuse_file_info(struct fuse_file_info* test) {
 	return test->direct_io && !test->keep_cache && test->flush && !test->nonseekable;

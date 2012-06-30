@@ -7,7 +7,6 @@ enum O_RDONLY=0;
 class HelloFs : FuseOperations {
 	override int getattr (const(char)[] path, stat_t * stat_buf) {
 		int res = 0;
-
 		memset(stat_buf, 0, stat_t.sizeof);
 		if(path=="/") {
 			stat_buf.st_mode = S_IFDIR | octal!755;
@@ -56,7 +55,7 @@ class HelloFs : FuseOperations {
 		size_t until = len>readbuf.length ? readbuf.length : len;
 		if(offset<hello_str.length && offset>=0) {
 			writefln("Real length: %s, offset: %s, until: %s", until-offset, offset, until);
-			readbuf[]=cast(const(ubyte)[])hello_str[(cast(size_t)offset)..until];
+			readbuf[0..until-(cast(size_t)offset)]=cast(const(ubyte)[])hello_str[(cast(size_t)offset)..until];
 			memcpy(readbuf.ptr, hello_str.ptr+cast(size_t)offset, until-cast(size_t)offset);
 			return cast(int)(until-cast(size_t)offset);
 		}

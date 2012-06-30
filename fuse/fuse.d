@@ -4,13 +4,10 @@ import fuse.fuse_impl;
 import std.bitmanip;
 import core.stdc.config;
 import core.sys.posix.sys.types;
-public import c.sys.statvfs;
-public import c.sys.c_defs;
+public import core.sys.posix.sys.statvfs;
 public import core.stdc.errno;
 public import core.sys.posix.sys.stat; //-> not correct on 64 bit systems
-//public import c.sys.stat;
 public import core.sys.posix.time;
-//import c.sys.fcntl;
 import core.sys.posix.fcntl; //--> can't be used imports Ds stat
 /**
  * Main interface you have to implement for a fuse filesystem.
@@ -374,7 +371,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int bmap (const(char)[] path, size_t blocksize, uint64_t *idx);
+	int bmap (const(char)[] path, size_t blocksize, ulong *idx);
 
 	/**
 	 * Ioctl

@@ -1,4 +1,4 @@
-sources=fuse/fuse.d fuse/fuse_impl.d fuse/util.d c/errno.d c/errno_linux.d c/sys/c_defs.d c/sys/stat.d c/sys/stat_defs.d c/sys/statvfs.d c/sys/fcntl.d examples/hello.d
+sources=fuse/fuse.d fuse/fuse_impl.d fuse/util.d examples/hello.d
 c_sources=fuse/struct_checks.o
 
 CFLAGS=-D_FILE_OFFSET_BITS=64

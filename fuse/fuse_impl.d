@@ -2,13 +2,7 @@ module fuse.fuse_impl;
 //import fuse_module=fuse.fuse;
 import fuse.fuse;
 import core.sys.posix.sys.types;
-//import fuse.fuse : fuse_file_info;
-//import fuse.fuse : fuse_fill_dir_t, utimbuf, fuse_pollhandle;
-import c.sys.c_defs;
-//import c.sys.stat;
-import c.sys.statvfs;
 import fuse.util;
-//import c.sys.fcntl;
 import core.sys.posix.fcntl;
 import core.sys.posix.utime;
 
