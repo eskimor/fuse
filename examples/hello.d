@@ -16,7 +16,7 @@ class HelloFs : FuseOperations {
 			writefln("hello_path requested!");
 			stat_buf.st_mode = S_IFREG | octal!444;
 			stat_buf.st_nlink = 1;
-			stat_buf.st_size = hello_str.sizeof;
+			stat_buf.st_size = hello_str.length;
 		}
 		else
 			res = -ENOENT;
@@ -51,13 +51,15 @@ class HelloFs : FuseOperations {
 		if(path!=hello_path)
 			return -ENOENT;
 		writefln("Passed buf length: %s", readbuf.length);
+		writefln("Passed offset: %s", offset);
 		size_t len = hello_str.length-cast(size_t)offset; // Cast save, hello world will never be larger than 2GB.
-		size_t until = len>readbuf.length ? readbuf.length : len;
+		writefln("from hello left: %s", len);
+		len=readbuf.length>len ? len : readbuf.length;
+		writefln("Actually copying: %s", len);
 		if(offset<hello_str.length && offset>=0) {
-			writefln("Real length: %s, offset: %s, until: %s", until-offset, offset, until);
-			readbuf[0..until-(cast(size_t)offset)]=cast(const(ubyte)[])hello_str[(cast(size_t)offset)..until];
-			memcpy(readbuf.ptr, hello_str.ptr+cast(size_t)offset, until-cast(size_t)offset);
-			return cast(int)(until-cast(size_t)offset);
+			readbuf[0..len]=cast(immutable(ubyte)[])hello_str[cast(size_t)offset..len];
+			//memcpy(readbuf.ptr, hello_str.ptr+offset, len);
+			return cast(int)(len);
 		}
 		else
 			return 0;
