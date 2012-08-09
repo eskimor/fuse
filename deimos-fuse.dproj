@@ -53,5 +53,6 @@
     <Compile Include="c\sys\statvfs.d" />
     <Compile Include="fuse\struct_checks.c" />
     <Compile Include="c\sys\fcntl.d" />
+    <Compile Include="examples\forwardfs.d" />
   </ItemGroup>
 </Project>
