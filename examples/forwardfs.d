@@ -14,14 +14,14 @@ enum O_RDONLY=0;
 
 class ForwardFs : FuseOperations {
 	override int getattr (const(char)[] path, stat_t * stat_buf) {
-		if(lstat(get_forwarding_path(path).toStringz(), stat_buf)<0)
+		if(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)<0)
 			return -errno;
 		return 0;
 		
 	}
 	
 	override int opendir (const(char)[] path, fuse_file_info * info) {
-		auto dir=dirent.opendir(get_forwarding_path(path).toStringz()); 
+		auto dir=dirent.opendir(get_forwarding_path(path.idup).toStringz()); 
 		if(!dir) {
 			return -errno;
 		}
@@ -40,7 +40,7 @@ class ForwardFs : FuseOperations {
 			dir=cast(dirent.DIR*)(info.fh);
 		}
 		else {
-			path=get_forwarding_path(path);
+			path=get_forwarding_path(path.idup);
 			dir=dirent.opendir(path.toStringz());
 			scope(exit) dirent.closedir(dir);
 			if(!dir) {
@@ -58,7 +58,7 @@ class ForwardFs : FuseOperations {
 	
 	override int open (const(char)[] path, fuse_file_info * fi) {
 		assert(fi);
-		int opened=fcntl.open(get_forwarding_path(path).toStringz(), fi.flags);
+		int opened=fcntl.open(get_forwarding_path(path.idup).toStringz(), fi.flags);
 		fi.fh=opened;
 		if(opened<0)
 			return -errno;
@@ -81,10 +81,10 @@ class ForwardFs : FuseOperations {
 		return count;
 	}
 	private:
-	string get_forwarding_path(const(char)[] path) {
+	string get_forwarding_path(string path) {
 		if(path[0]=='/') 
 			path=path[1..$];
-		return forward_path_~path.idup;
+		return forward_path_~path;
 	}
 	string forward_path_="/";	
 }
