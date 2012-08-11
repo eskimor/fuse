@@ -13,4 +13,4 @@ c/sys/c_defs.d: c_util/provideCsTypeDefs
 examples/hello: $(hello_sources) $(c_sources)
 	dmd -unittest -debug=fuse -L-lfuse $^ -of$@
 examples/forwardfs: $(forward_sources) $(c_sources)
-	dmd -unittest -debug=fuse -L-lfuse $^ -of$@
+	dmd -unittest -debug=fuse -L-lfuse dirent.o $^ -of$@ 

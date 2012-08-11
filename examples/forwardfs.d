@@ -3,9 +3,9 @@ import std.conv;
 import std.c.string;
 import c.sys.fcntl;
 import std.stdio;
-import std.c.stdio;
+import c_stdio=std.c.stdio;
 import std.string;
-import dirent=core.sys.posix.dirent;
+import dirent_m=core.sys.posix.dirent;
 import core.sys.posix.fcntl;
 import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
@@ -21,37 +21,41 @@ class ForwardFs : FuseOperations {
 	}
 	
 	override int opendir (const(char)[] path, fuse_file_info * info) {
-		auto dir=dirent.opendir(get_forwarding_path(path.idup).toStringz()); 
+		auto dir=dirent_m.opendir(get_forwarding_path(path.idup).toStringz()); 
 		if(!dir) {
 			return -errno;
 		}
 		info.fh=cast(ulong)(dir);
+		stderr.writefln("Set fh to: %s", info.fh);
 		return 0;
 	}
 	int releasedir (const(char)[] path, fuse_file_info * info) {
-		auto dir=cast(dirent.DIR*)(info.fh);
-		if(dirent.closedir(dir)<0)
+		auto dir=cast(dirent_m.DIR*)(info.fh);
+		if(dirent_m.closedir(dir)<0)
 			return -errno;
 		return 0;
 	}
 	override int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info * info) {
-		dirent.DIR* dir;
+		dirent_m.DIR* dir;
+		if(info) stderr.writefln("info.fh: %s", info.fh);
 		if(info) {
-			dir=cast(dirent.DIR*)(info.fh);
+			assert(info.fh);
+			dir=cast(dirent_m.DIR*)(info.fh);
 		}
 		else {
 			path=get_forwarding_path(path.idup);
-			dir=dirent.opendir(path.toStringz());
-			scope(exit) dirent.closedir(dir);
+			dir=dirent_m.opendir(path.toStringz());
+			scope(exit) dirent_m.closedir(dir);
 			if(!dir) {
 				return -errno;
 			}
 		}
-		dirent.dirent entry;
-		dirent.dirent *p;
-		int retval=dirent.readdir_r(dir, &entry, &p);
+		dirent_m.dirent entry;
+		dirent_m.dirent *p;
+		int retval=dirent_m.readdir_r(dir, &entry, &p);
 		while(p) {
 			filler(buf, entry.d_name.ptr, null, 0);
+			retval=dirent_m.readdir_r(dir, &entry, &p);
 		}
 		return -retval;
 	}

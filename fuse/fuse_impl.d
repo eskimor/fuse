@@ -254,9 +254,12 @@ extern (C) {
 	int deimos_d_fuse_statfs (const char *, statvfs_t *);
 
 	int deimos_d_fuse_flush (const char *, fuse_file_info *);
-
-	int deimos_d_fuse_release (const char *, fuse_file_info *);
-
+*/
+	int deimos_d_fuse_release (const char * path, fuse_file_info *info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.release(cString2DString(path), info);
+	}
+/*
 	int deimos_d_fuse_fsync (const char *, int, fuse_file_info *);
 
 
@@ -270,17 +273,23 @@ extern (C) {
 
 
 	int deimos_d_fuse_removexattr (const char *, const char *);
-
-	int deimos_d_fuse_opendir (const char *, fuse_file_info *);
 */
+	int deimos_d_fuse_opendir (const char * path, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.opendir(cString2DString(path), info);
+	}
+
 	int deimos_d_fuse_readdir (const char * path, void * data , fuse_fill_dir_t filler, off_t offset,
 	fuse_file_info * info) {
 		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
 		return ops.readdir(cString2DString(path), data, filler, offset, info);
 	}
-/*
-	int deimos_d_fuse_releasedir (const char *, fuse_file_info *);
 
+	int deimos_d_fuse_releasedir (const char * path, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.releasedir(cString2DString(path), info);
+	}
+/*
 	int deimos_d_fuse_fsyncdir (const char *, int, fuse_file_info *);
 
 	//void* deimos_d_fuse_init (fuse_conn_info *conn) {

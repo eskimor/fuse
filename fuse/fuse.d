@@ -463,10 +463,12 @@ extern(C) {
 		/** Lock owner id.  Available in locking operations and flush */
 		ulong lock_owner;
 	};
+	version(unittest) {
 	extern size_t c_get_fuse_file_info_size();
 	// Expectes the bitfield to be set this way:
 	// direct_io:1, keep_cache:0, flushe:1, nonseekable:0
 	extern int bit_field_check_fuse_file_info(fuse_file_info* test); 
+	}
 	unittest {
 		assert(fuse_file_info.sizeof==c_get_fuse_file_info_size());
 		fuse_file_info my_info;
