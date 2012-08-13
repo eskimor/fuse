@@ -289,34 +289,60 @@ extern (C) {
 		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
 		return ops.releasedir(cString2DString(path), info);
 	}
-/*
-	int deimos_d_fuse_fsyncdir (const char *, int, fuse_file_info *);
 
-	//void* deimos_d_fuse_init (fuse_conn_info *conn) {
-	//}
+	int deimos_d_fuse_fsyncdir (const char * path , int flush_only_user_data, fuse_file_info *info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.fsyncdir(cString2DString(path), flush_only_user_data!=0, info);
+	}
+	
+	void* deimos_d_fuse_init (fuse_conn_info *conn) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.init(conn);
+	}
 
-	//void deimos_d_fuse_destroy (void *);
+	void deimos_d_fuse_destroy (void * data) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.destroy(data);
+	}
 
-	int deimos_d_fuse_access (const char *, int);
+	int deimos_d_fuse_access (const char * path, int mask) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.access(cString2DString(path), mask);
+	}
 
-	int deimos_d_fuse_create (const char *, mode_t, fuse_file_info *);
+	int deimos_d_fuse_create (const char *path, mode_t mode, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.create(cString2DString(path), mode, info);
+	}
 
-	int deimos_d_fuse_ftruncate (const char *, off_t, fuse_file_info *);
+	int deimos_d_fuse_ftruncate (const char *path, off_t length, fuse_file_info * info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.ftruncate(cString2DString(path), length, info);
+	}
 
-	int deimos_d_fuse_fgetattr (const char *, stat_t *, fuse_file_info *);
+	int deimos_d_fuse_fgetattr (const char *path, stat_t *stbuf, fuse_file_info *info) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.fgetattr(cString2DString(path), stbuf, info);
+	}
 
-	int deimos_d_fuse_lock (const char *, fuse_file_info *, int cmd,
-			flock *);
+	int deimos_d_fuse_lock (const char *path, fuse_file_info *info, int cmd,
+	flock * locks) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.lock(cString2DString(path), info, cmd, locks);
+	}
 
-	int deimos_d_fuse_utimens (const char *, const timespec tv[2]);
+	int deimos_d_fuse_utimens (const char *path, const timespec ts[2]) {
+		auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+		return ops.utimens(path, ts);
+	}
 
 	int deimos_d_fuse_bmap (const char *, size_t blocksize, ulong *idx);
-	unsigned int flags;
+	
 
 	int deimos_d_fuse_ioctl (const char *, int cmd, void *arg,
 			fuse_file_info *, unsigned int flags, void *data);
 
 	int deimos_d_fuse_poll (const char *, fuse_file_info *,
 			fuse_pollhandle *ph, unsigned *reventsp);
-*/
+
 }

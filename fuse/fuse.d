@@ -177,7 +177,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int fsync (const(char)[] path, int, fuse_file_info *);
+	int fsync (const(char)[] path, bool datasync, fuse_file_info *info);
 
 	/** Set extended attributes */
 	int setxattr (const(char)[] path, const(char)[] name, const(byte)[] data, int);
@@ -277,7 +277,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int access (const(char)[] path, int);
+	int access (const(char)[] path, int mask);
 
 	/**
 	 * Create and open a file
