@@ -41,9 +41,7 @@
     </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="fuse\c_defs.d" />
     <Compile Include="fuse\fuse.d" />
-    <Compile Include="fuse\fuse_impl.d" />
     <Compile Include="fuse\util.d" />
     <Compile Include="examples\hello.d" />
     <Compile Include="c\errno.d" />
@@ -55,4 +53,19 @@
     <Compile Include="c\sys\fcntl.d" />
     <Compile Include="examples\forwardfs.d" />
   </ItemGroup>
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <MonoDevelop.Autotools.MakefileInfo RelativeMakefileName="Makefile" BuildTargetName="examples/forwardfs" ParallelProcesses="2">
+          <BuildFilesVar />
+          <DeployFilesVar />
+          <ResourcesVar />
+          <OthersVar />
+          <GacRefVar />
+          <AsmRefVar />
+          <ProjectRefVar />
+        </MonoDevelop.Autotools.MakefileInfo>
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
 </Project>
