@@ -84,6 +84,9 @@ class ForwardFs : FuseOperations {
 		}
 		return count;
 	}
+	override bool isNullPathOk() @property {
+		return true;
+	}
 	private:
 	string get_forwarding_path(string path) {
 		if(path[0]=='/') 
