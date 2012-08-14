@@ -5,6 +5,7 @@ import std.traits;
 import std.c.string;
 import std.conv;
 import std.string;
+import std.container;
 private {
 	string flagsToString(T)(int val) {
 		string result;
@@ -12,13 +13,17 @@ private {
 			if(m==T.none)
 				continue;
 			if((val&m)!=0) {
-				result~=chomp(to!string(m), "_")~" ";
+				auto orig=to!string(m);
+				auto buf=chomp(orig, "_");
+				if(buf is orig)
+					result~="@";
+				result~=buf~" ";
 			}
 		}
 		return result;
 	}
 }
-string createImplementation(ClassType, string classname)(){
+string createImplementation(ClassType, string classname)(bool[string] methods_to_ignore=["":false]){
 	string results;
 	string begin="import std.stdio;\nimport core.stdc.errno;\nclass "~ classname~" : "~ClassType.stringof~" {\n";
 	int alias_count=0;
@@ -26,6 +31,9 @@ string createImplementation(ClassType, string classname)(){
 	foreach(member ; __traits(allMembers, ClassType)) {
 		foreach(method; __traits(getVirtualMethods, ClassType, member))	 {
 			enum name=__traits(identifier, method);
+			if(name in methods_to_ignore) {
+				continue;
+			}
 			alias ReturnType!method return_type;
 			//results~="\toverride "~return_type.stringof~" "~name~ParameterTypeTuple!method.stringof~ // Not working for extern (C) function parameters.
 			results~="\toverride "~return_type.stringof~" "~name~"(";
@@ -53,8 +61,12 @@ string createImplementation(ClassType, string classname)(){
 				results~="\t\treturn -ENOSYS;\n\t}\n";
 			else static if(is (return_type : void*) )
 				results~="\t\treturn null;\n\t}\n";
-			else
+			else static if(is (return_type : bool) ) 
+				results~="\t\treturn false;\n\t}\n";
+			else static if(is (return_type : void))
 				results~="\t}\n";
+			else 
+				assert(0);
 			//writefln("Found method: %s", __traits(identifier, method));
 		}	
 	}
@@ -125,6 +137,8 @@ const(char)[] cString2DString(const char* c_str) {
 //	d_array!(const char) buf;
 //	buf.ptr=c_str;
 //	buf.length=strlen(c_str);
+	if(!c_str)
+		return c_str[0..0];
 	const(char)[] mystring=c_str[0..strlen(c_str)];
 	return mystring;
 }
