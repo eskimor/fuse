@@ -245,18 +245,14 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.3
 	 */
 	int fsyncdir (const(char)[] path, int, fuse_file_info *info);
-	// Not needed, so it is not forwarded to this interface, don't implement it!
+	
 	/**
-	 * Initialize filesystem
-	 *
-	 * The return value will passed in the private_data field of
-	 * fuse_context to all file operations and as a parameter to the
-	 * destroy() method.
+	 * Initialize filesystem.
 	 *
 	 * Introduced in version 2.3
 	 * Changed in version 2.6
 	 */
-	//void *init (fuse_conn_info *conn);
+	void init (fuse_conn_info *conn);
 
 	/**
 	 * Clean up filesystem
@@ -413,6 +409,7 @@ interface FuseOperationsInterface {
 
 version(unittest) {
 import std.stdio;
+
 }
 /**
  * Derive from FuseOperations, if you want to have predefined methods, which simply spit out a not implemented error.
@@ -442,6 +439,8 @@ alias int function (void* buf, const char* name, const stat_t* stbuf, off_t offs
 //alias fuse_fill_dir_t int function (fuse_dirh_t h, const char *name, int type, ino_t ino); // Don't know where I have got this definition from, but it is wrong.
 extern struct fuse_dirhandle;
 extern struct fuse_pollhandle;
+
+int fuse_notify_poll(fuse_pollhandle *ph);
 //alias fuse_fill_dir_t* fuse_dirhandle;
 
 struct fuse_file_info {
@@ -829,11 +828,12 @@ int deimos_d_fuse_fsyncdir (const char * path , int flush_only_user_data, fuse_f
 	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
 	return ops.fsyncdir(cString2DString(path), flush_only_user_data!=0, info);
 }
-// Not needed and even harms, because if not implemented the private_data pointer will be overridden wit 0.
-//void* deimos_d_fuse_init (fuse_conn_info *conn) {
-//	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-//	return ops.init(conn);
-//}
+
+void* deimos_d_fuse_init (fuse_conn_info *conn) {
+	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
+	ops.init(conn);
+	return cast(void*)ops; // init return value will override private_data, So simply return what we already had.
+}
 
 void deimos_d_fuse_destroy (void * data) {
 	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;

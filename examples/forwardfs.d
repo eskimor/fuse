@@ -9,6 +9,7 @@ import dirent_m=core.sys.posix.dirent;
 import core.sys.posix.fcntl;
 import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
+import core.sys.posix.sys.time;
 
 enum O_RDONLY=0;
 
@@ -68,6 +69,21 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
+	override int create (const(char)[] path, mode_t mode, fuse_file_info *info) {
+		assert(info);
+		int opened=fcntl.creat(get_forwarding_path(path.idup).toStringz(), mode);
+		info.fh=opened;
+		if(opened<0)
+			return -errno;
+		return 0;
+	}
+	override int unlink (const(char)[] path) {
+		auto mpath=get_forwarding_path(path.idup);
+		if(unistd.unlink(mpath.toStringz())<0)
+			return -errno;
+		return 0;
+		
+	}
 	override int release (const(char)[] path, fuse_file_info * info) {
 		assert(info);
 		if(unistd.close(cast(int)(info.fh))<0)
@@ -84,6 +100,48 @@ class ForwardFs : FuseOperations {
 		}
 		return count;
 	}
+	override int write (const(char)[] path, const(ubyte)[] data, off_t offset, fuse_file_info *info) {
+		assert(info);
+		auto fd=cast(int)(info.fh);
+		int count=cast(int)unistd.pwrite(fd, data.ptr, data.length, offset);
+		if(count<0)
+			return -errno;
+		return count;
+	}
+	
+	override int fgetattr (const(char)[] path, stat_t *stbuf, fuse_file_info *info) {
+		assert(info);
+		auto fd=cast(int)(info.fh);
+		if(fstat(fd, stbuf)<0)
+			return -errno;
+		return 0;
+	}
+	
+	override int ftruncate (const(char)[] path, off_t length, fuse_file_info *info) {
+		assert(info);
+		auto fd=cast(int)(info.fh);
+		if(unistd.ftruncate(fd, length)<0)
+			return -errno;
+		return 0;
+	}
+	override int truncate (const(char)[] path, off_t length) {
+		if(unistd.truncate(get_forwarding_path(path.idup).toStringz(), length)<0)
+			return -errno;
+		return 0;
+	}
+	
+	override int utimens (const(char)[] path, const timespec tv[]) {
+		auto mpath=get_forwarding_path(path.idup);
+		timeval[2] useconds_time=void;
+		foreach(i, val; tv) {
+			useconds_time[i].tv_sec=val.tv_sec;
+			useconds_time[i].tv_usec=val.tv_nsec/1000;
+		}
+		if(utimes(mpath.toStringz(), useconds_time)<0)
+			return -errno;
+		return 0;
+	}
+	
 	override bool isNullPathOk() @property {
 		return true;
 	}

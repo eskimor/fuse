@@ -8,7 +8,7 @@ CFLAGS=-D_FILE_OFFSET_BITS=64
 .phony: clean
 all: c/sys/c_defs.d examples/hello
 clean: 
-	rm examples/*.o examples/*.o examples/hello examples/forwardfs
+	rm -f examples/*.o examples/*.o examples/hello examples/forwardfs
 c_util/provideCsTypeDefs: c_util/provideCsTypeDefs.cc
 	g++ $^ -o $@ -D_FILE_OFFSET_BITS=64
 c/sys/c_defs.d: c_util/provideCsTypeDefs
