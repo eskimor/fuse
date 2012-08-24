@@ -10,7 +10,7 @@ import core.sys.posix.fcntl;
 import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
 import core.sys.posix.sys.time;
-import stat_m=core.sys.posix.sys.stat;
+import stat=core.sys.posix.sys.stat;
 
 enum O_RDONLY=0;
 
@@ -78,6 +78,11 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
+	override int mknod (const(char)[] path, mode_t mode, dev_t dev) {
+		if(stat.mknod(get_forwarding_path(path.idup).toStringz(), mode, dev)<0)
+			return -errno;
+		return 0;
+	}
 	override int unlink (const(char)[] path) {
 		auto mpath=get_forwarding_path(path.idup);
 		if(unistd.unlink(mpath.toStringz())<0)
@@ -118,6 +123,12 @@ class ForwardFs : FuseOperations {
 		return 0;
 	}
 	
+	override int setxattr (const(char)[] path, const(char)[] name, const(ubyte)[] data, int flags) {
+		//if(xattr.setxattr(get_forwarding_path(path.idup).toStringz(), 
+		// Waiting for xattr in druntime. Already on it.
+		return -1;
+	}
+	
 	override int ftruncate (const(char)[] path, off_t length, fuse_file_info *info) {
 		assert(info);
 		auto fd=cast(int)(info.fh);
@@ -143,9 +154,13 @@ class ForwardFs : FuseOperations {
 		return 0;
 	}
 
+	override int flush (const(char)[] path, fuse_file_info *info) {
+		return 0; // Not needed implied in close().
+	}
+
 	override int chmod (const(char)[] path, mode_t mode) {
 		auto mpath=get_forwarding_path(path.idup);
-		return stat_m.chmod(mpath.toStringz(), mode);
+		return stat.chmod(mpath.toStringz(), mode);
 	}
 
 	override int chown (const(char)[] path, uid_t uid, gid_t gid) {
@@ -155,7 +170,7 @@ class ForwardFs : FuseOperations {
 
 	override int mkdir (const(char)[] path, mode_t mode) {
 		auto mpath=get_forwarding_path(path.idup);
-		return stat_m.mkdir(mpath.toStringz(), mode|S_IFDIR );
+		return stat.mkdir(mpath.toStringz(), mode|S_IFDIR );
 	}
 
 	override int rmdir (const(char)[] path) {
