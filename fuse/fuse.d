@@ -61,7 +61,7 @@ interface FuseOperationsInterface {
 	int rmdir (const(char)[] path);
 
 	/** Create a symbolic link */
-	int symlink (const(char)[] path, const(char)[] to);
+	int symlink (const(char)[] to, const(char)[] path);
 
 	/** Rename a file */
 	int rename (const(char)[] path, const(char)[] to);
@@ -711,9 +711,9 @@ int deimos_d_fuse_rmdir (const char *path) {
 	return ops.rmdir(cString2DString(path));
 }
 
-int deimos_d_fuse_symlink (const char *from, const char *to) {
+int deimos_d_fuse_symlink (const char *to, const char *from) {
 	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.symlink(cString2DString(from), cString2DString(to));
+	return ops.symlink(cString2DString(to), cString2DString(from));
 }
 
 int deimos_d_fuse_rename (const char *from, const char *to) {
