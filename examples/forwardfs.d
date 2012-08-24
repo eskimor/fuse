@@ -184,6 +184,31 @@ class ForwardFs : FuseOperations {
 		return c_stdio.rename(mpath.toStringz(), rpath.toStringz());
 	}
 
+	override int readlink (const(char)[] path, ubyte[] buf) {
+	    	auto mpath=get_forwarding_path(path.idup);
+	    	ssize_t len;
+		len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length);
+		if (len < 0) {	
+		   return -errno;
+		}
+		else if (len >= buf.length) {
+		   return cast(int)len;
+		}
+		else {
+		   buf[len]='\0';
+		   return 0;
+		}
+	}
+	
+	override int symlink (const(char)[] to, const(char)[] path) {
+	    	auto mpath=get_forwarding_path(path.idup);
+
+		if (unistd.symlink(to.toStringz(), mpath.toStringz()) < 0)
+		   return -errno;
+		else 
+		   return 0;
+	}
+
 	override bool isNullPathOk() @property {
 		return true;
 	}
