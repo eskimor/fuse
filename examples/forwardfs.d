@@ -10,6 +10,7 @@ import core.sys.posix.fcntl;
 import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
 import core.sys.posix.sys.time;
+import stat_m=core.sys.posix.sys.stat;
 
 enum O_RDONLY=0;
 
@@ -141,7 +142,33 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
-	
+
+	override int chmod (const(char)[] path, mode_t mode) {
+		auto mpath=get_forwarding_path(path.idup);
+		return stat_m.chmod(mpath.toStringz(), mode);
+	}
+
+	override int chown (const(char)[] path, uid_t uid, gid_t gid) {
+		auto mpath=get_forwarding_path(path.idup);
+		return unistd.chown(mpath.toStringz(), uid, gid);
+	}
+
+	override int mkdir (const(char)[] path, mode_t mode) {
+		auto mpath=get_forwarding_path(path.idup);
+		return stat_m.mkdir(mpath.toStringz(), mode|S_IFDIR );
+	}
+
+	override int rmdir (const(char)[] path) {
+	    	auto mpath=get_forwarding_path(path.idup);
+		return unistd.rmdir(mpath.toStringz());
+	}
+
+	override int rename (const(char)[] path, const(char)[] to) {
+	    	auto mpath=get_forwarding_path(path.idup);
+	    	auto rpath=get_forwarding_path(to.idup);
+		return c_stdio.rename(mpath.toStringz(), rpath.toStringz());
+	}
+
 	override bool isNullPathOk() @property {
 		return true;
 	}
