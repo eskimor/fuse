@@ -26,7 +26,7 @@ interface FuseOperationsInterface {
 	 * ignored.	 The 'st_ino' field is ignored except if the 'use_ino'
 	 * mount option is given.
 	 */
-	int getattr (const(char)[] path, stat_t* stbuf);
+	int getattr (const(char)[] path, stat_t* stbuf, in ref AccessContext context);
 
 	/** Read the target of a symbolic link
 	 *
@@ -36,7 +36,7 @@ interface FuseOperationsInterface {
 	 * buffer, it should be truncated.	The return value should be 0
 	 * for success.
 	 */
-	int readlink (const(char)[] path, ubyte[] buf);
+	int readlink (const(char)[] path, ubyte[] buf, in ref AccessContext context);
 
 	/** Create a file node
 	 *
@@ -44,7 +44,7 @@ interface FuseOperationsInterface {
 	 * nodes.  If the filesystem defines a create() method, then for
 	 * regular files that will be called instead.
 	 */
-	int mknod (const(char)[] path, mode_t mode, dev_t dev);
+	int mknod (const(char)[] path, mode_t mode, dev_t dev, in ref AccessContext context);
 
 	/** Create a directory 
 	 *
@@ -52,31 +52,31 @@ interface FuseOperationsInterface {
 	 * bits set, i.e. S_ISDIR(mode) can be false.  To obtain the
 	 * correct directory type bits use  mode|S_IFDIR
 	 * */
-	int mkdir (const(char)[] path, mode_t mode);
+	int mkdir (const(char)[] path, mode_t mode, in ref AccessContext context);
 
 	/** Remove a file */
-	int unlink (const(char)[] path);
+	int unlink (const(char)[] path, in ref AccessContext context);
 
 	/** Remove a directory */
-	int rmdir (const(char)[] path);
+	int rmdir (const(char)[] path, in ref AccessContext context);
 
 	/** Create a symbolic link */
-	int symlink (const(char)[] to, const(char)[] path);
+	int symlink (const(char)[] to, const(char)[] path, in ref AccessContext context);
 
 	/** Rename a file */
-	int rename (const(char)[] path, const(char)[] to);
+	int rename (const(char)[] path, const(char)[] to, in ref AccessContext context);
 
 	/** Create a hard link to a file */
-	int link (const(char)[] path, const(char)[] to);
+	int link (const(char)[] path, const(char)[] to, in ref AccessContext context);
 
 	/** Change the permission bits of a file */
-	int chmod (const(char)[] path, mode_t mode);
+	int chmod (const(char)[] path, mode_t mode, in ref AccessContext context);
 
 	/** Change the owner and group of a file */
-	int chown (const(char)[] path, uid_t uid, gid_t gid);
+	int chown (const(char)[] path, uid_t uid, gid_t gid, in ref AccessContext context);
 
 	/** Change the size of a file */
-	int truncate (const(char)[] path, off_t length);
+	int truncate (const(char)[] path, off_t length, in ref AccessContext context);
 
 	/** File open operation
 	 *
@@ -95,7 +95,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int open (const(char)[] path, fuse_file_info *info);
+	int open (const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Read data from an open file
 	 *
@@ -109,7 +109,7 @@ interface FuseOperationsInterface {
 	 * Changed in version 2.2
 	 */
 	int read (const(char)[] path, ubyte[] readbuf, off_t offset,
-			fuse_file_info * info );
+			fuse_file_info * info , in ref AccessContext context);
 
 	/** Write data to an open file
 	 *
@@ -119,7 +119,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int write (const(char)[] path, const(ubyte)[] data, off_t offset, fuse_file_info *info);
+	int write (const(char)[] path, const(ubyte)[] data, off_t offset, fuse_file_info *info, in ref AccessContext context);
 
 	/** Get file system statistics
 	 *
@@ -128,7 +128,7 @@ interface FuseOperationsInterface {
 	 * Replaced 'struct statfs' parameter with 'struct statvfs' in
 	 * version 2.5
 	 */
-	int statfs (const(char)[] path, statvfs_t *stbuf);
+	int statfs (const(char)[] path, statvfs_t *stbuf, in ref AccessContext context);
 
 	/** Possibly flush cached data
 	 *
@@ -153,7 +153,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int flush (const(char)[] path, fuse_file_info *info);
+	int flush (const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Release an open file
 	 *
@@ -169,7 +169,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int release (const(char)[] path, fuse_file_info *info);
+	int release (const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Synchronize file contents
 	 *
@@ -178,22 +178,22 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int fsync (const(char)[] path, bool onlyldatasync, fuse_file_info *info);
+	int fsync (const(char)[] path, bool onlyldatasync, fuse_file_info *info, in ref AccessContext context);
 
 	/** Set extended attributes */
-	int setxattr (const(char)[] path, const(char)[] name, const(ubyte)[] data, int flags);
+	int setxattr (const(char)[] path, const(char)[] name, const(ubyte)[] data, int flags, in ref AccessContext context);
 
 	/** Get extended attributes */
-	int getxattr (const(char)[] path, const(char)[] name, ubyte[] data);
+	int getxattr (const(char)[] path, const(char)[] name, ubyte[] data, in ref AccessContext context);
 
 	/** List extended attributes */
 	/**
 	 * @param list Provide all attribute names separated by '\0'.
 	 */
-	int listxattr (const(char)[] path, char[] list);
+	int listxattr (const(char)[] path, char[] list, in ref AccessContext context);
 
 	/** Remove extended attributes */
-	int removexattr (const(char)[] path, const(char)[] name);
+	int removexattr (const(char)[] path, const(char)[] name, in ref AccessContext context);
 
 	/** Open directory
 	 *
@@ -205,7 +205,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int opendir (const(char)[] path, fuse_file_info *info);
+	int opendir (const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Read directory
 	 *
@@ -229,13 +229,13 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.3
 	 */
 	int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset,
-			fuse_file_info *info);
+			fuse_file_info *info, in ref AccessContext context);
 
 	/** Release directory
 	 *
 	 * Introduced in version 2.3
 	 */
-	int releasedir (const(char)[] path, fuse_file_info *info);
+	int releasedir (const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Synchronize directory contents
 	 *
@@ -244,7 +244,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int fsyncdir (const(char)[] path, int, fuse_file_info *info);
+	int fsyncdir (const(char)[] path, int, fuse_file_info *info, in ref AccessContext context);
 	
 	/**
 	 * Initialize filesystem.
@@ -252,7 +252,7 @@ interface FuseOperationsInterface {
 	 * Introduced in version 2.3
 	 * Changed in version 2.6
 	 */
-	void init (fuse_conn_info *conn);
+	void init (fuse_conn_info *conn, in ref AccessContext context);
 
 	/**
 	 * Clean up filesystem
@@ -261,7 +261,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	void destroy (void *private_data);
+	void destroy (void *private_data, in ref AccessContext context);
 
 	/**
 	 * Check file access permissions
@@ -274,7 +274,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int access (const(char)[] path, int mask);
+	int access (const(char)[] path, int mask, in ref AccessContext context);
 
 	/**
 	 * Create and open a file
@@ -288,7 +288,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int create (const(char)[] path, mode_t mode, fuse_file_info *info);
+	int create (const(char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Change the size of an open file
@@ -302,7 +302,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int ftruncate (const(char)[] path, off_t length, fuse_file_info *info);
+	int ftruncate (const(char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Get attributes from an open file
@@ -316,7 +316,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int fgetattr (const(char)[] path, stat_t *stbuf, fuse_file_info *info);
+	int fgetattr (const(char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Perform POSIX file locking operation
@@ -350,7 +350,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int lock (const(char)[] path, fuse_file_info *info, int cmd, flock *locks);
+	int lock (const(char)[] path, fuse_file_info *info, int cmd, flock *locks, in ref AccessContext context);
 
 	/**
 	 * Change the access and modification times of a file with
@@ -358,7 +358,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int utimens (const(char)[] path, const timespec tv[]);
+	int utimens (const(char)[] path, const timespec tv[], in ref AccessContext context);
 
 	/**
 	 * Map block index within file to block index within device
@@ -368,7 +368,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int bmap (const(char)[] path, size_t blocksize, ulong *idx);
+	int bmap (const(char)[] path, size_t blocksize, ulong *idx, in ref AccessContext context);
 	
 
 
@@ -384,7 +384,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.8
 	 */
-	int ioctl (const(char)[] path, int cmd, void *arg, fuse_file_info *, uint flags, void *data);
+	int ioctl (const(char)[] path, int cmd, void *arg, fuse_file_info *, uint flags, void *data, in ref AccessContext context);
 
 	/**
 	 * Poll for IO readiness events
@@ -403,7 +403,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.8
 	 */
-	int poll (const(char)[] path, fuse_file_info *info,	fuse_pollhandle *ph, uint *reventsp);
+	int poll (const(char)[] path, fuse_file_info *info,	fuse_pollhandle *ph, uint *reventsp, in ref AccessContext context);
 	bool isNullPathOk() @property;
 }
 
@@ -625,7 +625,18 @@ struct fuse_context {
 	mode_t umask;
 };
 
-
+struct AccessContext {
+		private this(fuse_context* fc) {
+			uid=fc.uid;
+			gid=fc.gid;
+			pid=fc.pid;
+			umask=fc.umask;
+		}
+		uid_t uid;
+		gid_t gid;
+		pid_t pid;
+		mode_t umask;
+}
 /**
  * Connection information, passed to the ->init() method
  *
@@ -682,209 +693,248 @@ struct fuse_conn_info {
 }
 
 int deimos_d_fuse_getattr (const char * path, stat_t * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.getattr(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.getattr(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_readlink (const char * path, ubyte * buf, size_t size) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.readlink(cString2DString(path), cArray2DArray(buf, size));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.readlink(cString2DString(path), cArray2DArray(buf, size), AccessContext(context));
 }
 
 int deimos_d_fuse_mknod (const char * path, mode_t mode, dev_t rdev) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.mknod(cString2DString(path), mode, rdev);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.mknod(cString2DString(path), mode, rdev, AccessContext(context));
 }
 
 int deimos_d_fuse_mkdir (const char *path, mode_t mode) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.mkdir(cString2DString(path), mode);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.mkdir(cString2DString(path), mode, AccessContext(context));
 }
 
 int deimos_d_fuse_unlink (const char *path) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.unlink(cString2DString(path));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.unlink(cString2DString(path), AccessContext(context));
 }
 
 int deimos_d_fuse_rmdir (const char *path) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.rmdir(cString2DString(path));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.rmdir(cString2DString(path), AccessContext(context));
 }
 
 int deimos_d_fuse_symlink (const char *to, const char *from) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.symlink(cString2DString(to), cString2DString(from));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.symlink(cString2DString(to), cString2DString(from), AccessContext(context));
 }
 
 int deimos_d_fuse_rename (const char *from, const char *to) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.rename(cString2DString(from), cString2DString(to));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.rename(cString2DString(from), cString2DString(to), AccessContext(context));
 }
 
 
 int deimos_d_fuse_link (const char *from, const char *to) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.link(cString2DString(from), cString2DString(to));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.link(cString2DString(from), cString2DString(to), AccessContext(context));
 }
 
 
 int deimos_d_fuse_chmod (const char *path, mode_t mode) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.chmod(cString2DString(path), mode);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.chmod(cString2DString(path), mode, AccessContext(context));
 }
 
 int deimos_d_fuse_chown (const char * path, uid_t uid, gid_t gid) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.chown(cString2DString(path), uid, gid);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.chown(cString2DString(path), uid, gid, AccessContext(context));
 }
 
 int deimos_d_fuse_truncate (const char * path, off_t length) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.truncate(cString2DString(path), length);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.truncate(cString2DString(path), length, AccessContext(context));
 }
 
 //int deimos_d_fuse_utime (const char * path, utimbuf *time) {
-//	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-//	return ops.utime(cString2DString(path), time);
+	//auto context=fuse_get_context();
+//	auto ops=cast(FuseOperationsInterface)context.private_data;
+//	return ops.utime(cString2DString(path), time, AccessContext(context));
 //}
 
 int deimos_d_fuse_open (const char * path, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.open(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.open(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_read (const char * path, ubyte * data , size_t data_length, 
 		off_t offset, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.read(cString2DString(path), cArray2DArray!ubyte(data, data_length), offset, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.read(cString2DString(path), cArray2DArray!ubyte(data, data_length), offset, info, AccessContext(context));
 }
 
 int deimos_d_fuse_write (const char *path, const ubyte *data, size_t length, off_t offset, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.write(cString2DString(path), cArray2DArray(data, length), offset, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.write(cString2DString(path), cArray2DArray(data, length), offset, info, AccessContext(context));
 }
 
 int deimos_d_fuse_statfs (const char * path, statvfs_t *stbuf) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.statfs(cString2DString(path), stbuf);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.statfs(cString2DString(path), stbuf, AccessContext(context));
 }
 
 int deimos_d_fuse_flush (const char * path, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.flush(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.flush(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_release (const char * path, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.release(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.release(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_fsync (const char * path, int onlydatasync, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.fsync(cString2DString(path), onlydatasync!=0, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.fsync(cString2DString(path), onlydatasync!=0, info, AccessContext(context));
 }
 
 
 int deimos_d_fuse_setxattr (const char *path, const char *name, const ubyte *data, size_t length , int flags) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.setxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length), flags);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.setxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length), flags, AccessContext(context));
 }
 
 
 int deimos_d_fuse_getxattr (const char *path, const char *name, ubyte *data, size_t length) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.getxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.getxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length), AccessContext(context));
 }
 
 
 int deimos_d_fuse_listxattr (const char *path, char *attributes, size_t length) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.listxattr(cString2DString(path), cArray2DArray(attributes, length));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.listxattr(cString2DString(path), cArray2DArray(attributes, length), AccessContext(context));
 }
 
 
 int deimos_d_fuse_removexattr (const char *path, const char *name) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.removexattr(cString2DString(path), cString2DString(name));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.removexattr(cString2DString(path), cString2DString(name), AccessContext(context));
 }
 
 int deimos_d_fuse_opendir (const char * path, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.opendir(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.opendir(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_readdir (const char * path, void * data , fuse_fill_dir_t filler, off_t offset,
 fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.readdir(cString2DString(path), data, filler, offset, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.readdir(cString2DString(path), data, filler, offset, info, AccessContext(context));
 }
 
 int deimos_d_fuse_releasedir (const char * path, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.releasedir(cString2DString(path), info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.releasedir(cString2DString(path), info, AccessContext(context));
 }
 
 int deimos_d_fuse_fsyncdir (const char * path , int flush_only_user_data, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.fsyncdir(cString2DString(path), flush_only_user_data!=0, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.fsyncdir(cString2DString(path), flush_only_user_data!=0, info, AccessContext(context));
 }
 
 void* deimos_d_fuse_init (fuse_conn_info *conn) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	ops.init(conn);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	ops.init(conn, AccessContext(context));
 	return cast(void*)ops; // init return value will override private_data, So simply return what we already had.
 }
 
 void deimos_d_fuse_destroy (void * data) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.destroy(data);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.destroy(data, AccessContext(context));
 }
 
 int deimos_d_fuse_access (const char * path, int mask) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.access(cString2DString(path), mask);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.access(cString2DString(path), mask, AccessContext(context));
 }
 
 int deimos_d_fuse_create (const char *path, mode_t mode, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.create(cString2DString(path), mode, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.create(cString2DString(path), mode, info, AccessContext(context));
 }
 
 int deimos_d_fuse_ftruncate (const char *path, off_t length, fuse_file_info * info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.ftruncate(cString2DString(path), length, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.ftruncate(cString2DString(path), length, info, AccessContext(context));
 }
 
 int deimos_d_fuse_fgetattr (const char *path, stat_t *stbuf, fuse_file_info *info) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.fgetattr(cString2DString(path), stbuf, info);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.fgetattr(cString2DString(path), stbuf, info, AccessContext(context));
 }
 
 int deimos_d_fuse_lock (const char *path, fuse_file_info *info, int cmd,
 flock * locks) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.lock(cString2DString(path), info, cmd, locks);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.lock(cString2DString(path), info, cmd, locks, AccessContext(context));
 }
 
 int deimos_d_fuse_utimens (const char *path, const timespec* ts) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.utimens(cString2DString(path), cArray2DArray(ts, 2));
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.utimens(cString2DString(path), cArray2DArray(ts, 2), AccessContext(context));
 }
 
 int deimos_d_fuse_bmap (const char * path, size_t blocksize, ulong *idx) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.bmap(cString2DString(path), blocksize, idx);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.bmap(cString2DString(path), blocksize, idx, AccessContext(context));
 }
 
 
 int deimos_d_fuse_ioctl (const char * path, int cmd, void *arg,
 fuse_file_info * info, uint flags, void *data) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.ioctl(cString2DString(path), cmd, arg, info, flags, data);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.ioctl(cString2DString(path), cmd, arg, info, flags, data, AccessContext(context));
 }
 
 int deimos_d_fuse_poll (const char * path, fuse_file_info * info,
 fuse_pollhandle *ph, uint *reventsp) {
-	auto ops=cast(FuseOperationsInterface)fuse_get_context().private_data;
-	return ops.poll(cString2DString(path), info, ph, reventsp);
+	auto context=fuse_get_context();
+	auto ops=cast(FuseOperationsInterface)context.private_data;
+	return ops.poll(cString2DString(path), info, ph, reventsp, AccessContext(context));
 }

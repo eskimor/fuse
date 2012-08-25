@@ -11,18 +11,22 @@ import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
 import core.sys.posix.sys.time;
 import stat=core.sys.posix.sys.stat;
+import xattr=core.sys.linux.sys.xattr;
 
 enum O_RDONLY=0;
 
 class ForwardFs : FuseOperations {
-	override int getattr (const(char)[] path, stat_t * stat_buf) {
+//	override int access (const(char)[] path, int mask, in ref AccessContext context) {
+//		return -1;
+//	}
+	override int getattr (const(char)[] path, stat_t * stat_buf, in ref AccessContext context) {
 		if(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)<0)
 			return -errno;
 		return 0;
 		
 	}
 	
-	override int opendir (const(char)[] path, fuse_file_info * info) {
+	override int opendir (const(char)[] path, fuse_file_info * info, in ref AccessContext context) {
 		auto dir=dirent_m.opendir(get_forwarding_path(path.idup).toStringz()); 
 		if(!dir) {
 			return -errno;
@@ -37,7 +41,7 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
-	override int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info * info) {
+	override int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info * info, in ref AccessContext context) {
 		dirent_m.DIR* dir;
 		if(info) stderr.writefln("info.fh: %s", info.fh);
 		if(info) {
@@ -62,7 +66,7 @@ class ForwardFs : FuseOperations {
 		return -retval;
 	}
 	
-	override int open (const(char)[] path, fuse_file_info * fi) {
+	override int open (const(char)[] path, fuse_file_info * fi, in ref AccessContext context) {
 		assert(fi);
 		int opened=fcntl.open(get_forwarding_path(path.idup).toStringz(), fi.flags);
 		fi.fh=opened;
@@ -70,7 +74,7 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
-	override int create (const(char)[] path, mode_t mode, fuse_file_info *info) {
+	override int create (const(char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context) {
 		assert(info);
 		int opened=fcntl.creat(get_forwarding_path(path.idup).toStringz(), mode);
 		info.fh=opened;
@@ -78,26 +82,26 @@ class ForwardFs : FuseOperations {
 			return -errno;
 		return 0;
 	}
-	override int mknod (const(char)[] path, mode_t mode, dev_t dev) {
+	override int mknod (const(char)[] path, mode_t mode, dev_t dev, in ref AccessContext context) {
 		if(stat.mknod(get_forwarding_path(path.idup).toStringz(), mode, dev)<0)
 			return -errno;
 		return 0;
 	}
-	override int unlink (const(char)[] path) {
+	override int unlink (const(char)[] path, in ref AccessContext context) {
 		auto mpath=get_forwarding_path(path.idup);
 		if(unistd.unlink(mpath.toStringz())<0)
 			return -errno;
 		return 0;
 		
 	}
-	override int release (const(char)[] path, fuse_file_info * info) {
+	override int release (const(char)[] path, fuse_file_info * info, in ref AccessContext context) {
 		assert(info);
 		if(unistd.close(cast(int)(info.fh))<0)
 			return -errno;
 		return 0;
 		
 	}
-	override int read (const(char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info) {
+	override int read (const(char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info, in ref AccessContext context) {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		int count=cast(int)(unistd.pread(fd, readbuf.ptr, readbuf.length, offset));
@@ -106,7 +110,7 @@ class ForwardFs : FuseOperations {
 		}
 		return count;
 	}
-	override int write (const(char)[] path, const(ubyte)[] data, off_t offset, fuse_file_info *info) {
+	override int write (const(char)[] path, const(ubyte)[] data, off_t offset, fuse_file_info *info, in ref AccessContext context) {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		int count=cast(int)unistd.pwrite(fd, data.ptr, data.length, offset);
@@ -115,7 +119,7 @@ class ForwardFs : FuseOperations {
 		return count;
 	}
 	
-	override int fgetattr (const(char)[] path, stat_t *stbuf, fuse_file_info *info) {
+	override int fgetattr (const(char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context) {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		if(fstat(fd, stbuf)<0)
@@ -123,26 +127,44 @@ class ForwardFs : FuseOperations {
 		return 0;
 	}
 	
-	override int setxattr (const(char)[] path, const(char)[] name, const(ubyte)[] data, int flags) {
-		//if(xattr.setxattr(get_forwarding_path(path.idup).toStringz(), 
-		// Waiting for xattr in druntime. Already on it.
-		return -1;
+	override int setxattr (const(char)[] path, const(char)[] name, const(ubyte)[] data, int flags, in ref AccessContext context) {
+		if(xattr.setxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length, flags)<0)
+			return -errno;
+		return 0;
 	}
 	
-	override int ftruncate (const(char)[] path, off_t length, fuse_file_info *info) {
+	override int getxattr (const(char)[] path, const(char)[] name, ubyte[] data, in ref AccessContext context) {
+		if(xattr.getxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length)<0)
+			return -errno;
+		return 0;
+	}
+
+	
+	override int listxattr (const(char)[] path, char[] list, in ref AccessContext context) {
+		if(xattr.listxattr(get_forwarding_path(path.idup).toStringz(), list.ptr, list.length)<0)
+			return -errno;
+		return 0;
+	}
+
+	override int removexattr (const(char)[] path, const(char)[] name, in ref AccessContext context) {
+		if(xattr.removexattr(get_forwarding_path(path.idup).toStringz(), name.ptr)<0)
+			return -errno;
+		return 0;
+	}
+	override int ftruncate (const(char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context) {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		if(unistd.ftruncate(fd, length)<0)
 			return -errno;
 		return 0;
 	}
-	override int truncate (const(char)[] path, off_t length) {
+	override int truncate (const(char)[] path, off_t length, in ref AccessContext context) {
 		if(unistd.truncate(get_forwarding_path(path.idup).toStringz(), length)<0)
 			return -errno;
 		return 0;
 	}
 	
-	override int utimens (const(char)[] path, const timespec tv[]) {
+	override int utimens (const(char)[] path, const timespec tv[], in ref AccessContext context) {
 		auto mpath=get_forwarding_path(path.idup);
 		timeval[2] useconds_time=void;
 		foreach(i, val; tv) {
@@ -154,37 +176,37 @@ class ForwardFs : FuseOperations {
 		return 0;
 	}
 
-	override int flush (const(char)[] path, fuse_file_info *info) {
+	override int flush (const(char)[] path, fuse_file_info *info, in ref AccessContext context) {
 		return 0; // Not needed implied in close().
 	}
 
-	override int chmod (const(char)[] path, mode_t mode) {
+	override int chmod (const(char)[] path, mode_t mode, in ref AccessContext context) {
 		auto mpath=get_forwarding_path(path.idup);
 		return stat.chmod(mpath.toStringz(), mode);
 	}
 
-	override int chown (const(char)[] path, uid_t uid, gid_t gid) {
+	override int chown (const(char)[] path, uid_t uid, gid_t gid, in ref AccessContext context) {
 		auto mpath=get_forwarding_path(path.idup);
 		return unistd.chown(mpath.toStringz(), uid, gid);
 	}
 
-	override int mkdir (const(char)[] path, mode_t mode) {
+	override int mkdir (const(char)[] path, mode_t mode, in ref AccessContext context) {
 		auto mpath=get_forwarding_path(path.idup);
 		return stat.mkdir(mpath.toStringz(), mode|S_IFDIR );
 	}
 
-	override int rmdir (const(char)[] path) {
+	override int rmdir (const(char)[] path, in ref AccessContext context) {
 	    	auto mpath=get_forwarding_path(path.idup);
 		return unistd.rmdir(mpath.toStringz());
 	}
 
-	override int rename (const(char)[] path, const(char)[] to) {
+	override int rename (const(char)[] path, const(char)[] to, in ref AccessContext context) {
 	    	auto mpath=get_forwarding_path(path.idup);
 	    	auto rpath=get_forwarding_path(to.idup);
 		return c_stdio.rename(mpath.toStringz(), rpath.toStringz());
 	}
 
-	override int readlink (const(char)[] path, ubyte[] buf) {
+	override int readlink (const(char)[] path, ubyte[] buf, in ref AccessContext context) {
 	    	auto mpath=get_forwarding_path(path.idup);
 	    	ssize_t len;
 		len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length);
@@ -200,7 +222,7 @@ class ForwardFs : FuseOperations {
 		}
 	}
 	
-	override int symlink (const(char)[] to, const(char)[] path) {
+	override int symlink (const(char)[] to, const(char)[] path, in ref AccessContext context) {
 	    	auto mpath=get_forwarding_path(path.idup);
 
 		if (unistd.symlink(to.toStringz(), mpath.toStringz()) < 0)
