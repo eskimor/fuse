@@ -37,7 +37,6 @@ string createImplementation(ClassType, string classname)(bool[string] methods_to
 			alias ReturnType!method return_type;
 			//results~="\toverride "~return_type.stringof~" "~name~ParameterTypeTuple!method.stringof~ // Not working for extern (C) function parameters.
 			results~="\toverride "~return_type.stringof~" "~name~"(";
-			
 			foreach(i, p; ParameterTypeTuple!method) {
 				results~=flagsToString!ParameterStorageClass(ParameterStorageClassTuple!method[i])~" ";
 				if("extern".length<p.stringof.length && "extern"==p.stringof[0.."extern".length]) {
@@ -110,6 +109,113 @@ string initializeFuncPtrStruct(StructType, string struct_name, string prefix)() 
 	}
 	return result;
 }
+
+string createSafeWrappers(StructType, string used_prefix)() {
+	string results;
+	int alias_count=0;
+	string alias_defs;
+	foreach(member; __traits(allMembers, StructType)) {
+		StructType my_struct;
+		//auto method=mixin("&"~StructType.stringof~"."~member);
+		auto method=mixin("my_struct."~member);
+		if(!isFunctionPointer!(method))
+			continue;
+		alias ReturnType!method return_type;
+		results~=return_type.stringof~" "~used_prefix~"safe_"~member~"(";
+		int last_par=-1;
+		foreach(i, p; ParameterTypeTuple!method) {
+			results~=flagsToString!ParameterStorageClass(ParameterStorageClassTuple!(method)[i])~" ";
+			if("extern".length<p.stringof.length && "extern"==p.stringof[0.."extern".length]) {
+				alias_defs~="alias "~p.stringof~" work_around_"~to!string(alias_count)~";\n";
+				results~="work_around_"~to!string(alias_count);
+				alias_count++;
+			}
+			else {
+				results~=p.stringof;
+			}
+			results~=" par"~to!string(i)~",";
+			last_par=i;
+		}
+		if(results[$-1]==',')
+			results=results[0..$-1]~')';
+		else
+			results~=')';
+		results~=" "~flagsToString!FunctionAttribute(functionAttributes!method);
+		static if(is (return_type : void)) 
+			results~="{\n\ttry{\n\t\t"~used_prefix~member~"(";
+		else
+			results~="{\n\ttry{\n\t\treturn "~used_prefix~member~"(";
+		for(int i=0; i<=last_par; i++) {
+			results~="par"~to!string(i)~",";
+		}
+		if(results[$-1]==',')
+			results=results[0..$-1]~");\n\t}";
+		else
+			results~=");\n\t}";
+		results~="\n\tcatch(ErrnoException e) {\n";
+		static if(is (return_type == int) )
+			results~="\t\treturn -e.errno;\n\t}\n";
+		else static if(is (return_type : void*) )
+			results~="\t\treturn null;\n\t}\n";
+		else static if(is (return_type : bool) ) 
+			results~="\t\treturn false;\n\t}\n";
+		else static if(is (return_type : void))
+			results~="\t}\n";
+		else 
+			assert(0);
+		results~="\tcatch(Exception e) {\n";
+		static if(is (return_type == int) )
+			results~="\t\treturn -ENOTRECOVERABLE;\n\t}\n";
+		else static if(is (return_type : void*) )
+			results~="\t\treturn null;\n\t}\n";
+		else static if(is (return_type : bool) ) 
+			results~="\t\treturn false;\n\t}\n";
+		else static if(is (return_type : void))
+			results~="\t}\n";
+		else 
+			assert(0);
+		results~="}\n";
+	}
+	return alias_defs~results;
+}
+unittest {
+	import core.sys.posix.sys.types;
+	struct Test1 {
+		int function (in char* , mode_t, dev_t) mknod;
+
+	int function (in char* , mode_t) mkdir;
+
+
+	int function (in char* ) unlink;
+
+
+	int function (in char* ) rmdir;
+
+
+	int function (in char* , in char* ) symlink;
+
+
+	int function (in char* , in char* ) rename;
+
+
+	int function (in char* , in char* ) link;
+
+
+	int function (in char* , mode_t) chmod;
+
+
+	int function (in char* , uid_t, gid_t) chown;
+
+
+	int function (in char* , off_t) truncate;
+	void function(in int a) haha;
+	}
+	enum buf=createSafeWrappers!(Test1, "haha_");
+	writefln("%s", buf);
+	//mixin(createImplementation!(MyInterface, "MyImplementation")());
+	//auto impl=new MyImplementation(); // Must be instantiable!
+}
+
 version(unittest) {
 struct Test {
 	void function() test;
