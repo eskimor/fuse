@@ -5,7 +5,7 @@ import c.sys.fcntl;
 import std.stdio;
 enum O_RDONLY=0;
 class HelloFs : FuseOperations {
-	override int getattr (const(char)[] path, stat_t * stat_buf) {
+	override int getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context) {
 		int res = 0;
 		memset(stat_buf, 0, stat_t.sizeof);
 		if(path=="/") {
@@ -23,7 +23,7 @@ class HelloFs : FuseOperations {
 
 		return res;
 	}
-	override int readdir (const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info *) {
+	override int readdir (in const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset, fuse_file_info *info, in ref AccessContext context) {
 		if(path!="/")
 			return -ENOENT;
 		
@@ -32,7 +32,7 @@ class HelloFs : FuseOperations {
 		filler(buf, hello_path.ptr+1, null, 0);
 		return 0;
 	}
-	override int open (const(char)[] path, fuse_file_info * fi) {
+	override int open (in const(char)[] path, fuse_file_info *info, in ref AccessContext context) {
 		if(path!=hello_path)
 			return -ENOENT;
 
@@ -41,7 +41,7 @@ class HelloFs : FuseOperations {
 
 		return 0;
 	}
-	override int read (const(char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info) {
+	override int read (in const(char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info , in ref AccessContext context) {
 		if(path!=hello_path)
 			return -ENOENT;
 		writefln("Passed buf length: %s", readbuf.length);
