@@ -11,6 +11,8 @@ import fcntl=core.sys.posix.fcntl;
 import unistd=core.sys.posix.unistd;
 import core.sys.posix.sys.time;
 import stat=core.sys.posix.sys.stat;
+import statvfs=core.sys.posix.sys.statvfs;
+
 
 enum O_RDONLY=0;
 
@@ -204,6 +206,25 @@ class ForwardFs : FuseOperations {
 	    	auto mpath=get_forwarding_path(path.idup);
 
 		if (unistd.symlink(to.toStringz(), mpath.toStringz()) < 0)
+		   return -errno;
+		else 
+		   return 0;
+	}
+
+	override int link (const(char)[] path, const(char)[] to) {
+		auto mpath=get_forwarding_path(path.idup);
+		auto topath=get_forwarding_path(to.idup);
+
+		if (unistd.link(mpath.toStringz(), topath.toStringz()) < 0)
+		   return -errno;
+		else 
+		   return 0;
+	}
+
+	override int statfs (const(char)[] path, statvfs_t *stbuf) {
+		auto mpath=get_forwarding_path(path.idup);
+
+		if (statvfs.statvfs(mpath.toStringz(), stbuf) < 0)
 		   return -errno;
 		else 
 		   return 0;
