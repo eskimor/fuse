@@ -423,13 +423,13 @@ int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 	const(char)*[] c_args=new const(char)*[](args.length);
 	foreach(i, arg; args) 
 		c_args[i]=arg.ptr;
-	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_")());
+	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_safe_")());
 	debug(fuse) writefln("Initialize struct: ");
-	debug(fuse) writefln(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_")());
+	debug(fuse) writefln(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_safe_")());
 	
-	assert(my_operations.getattr==&deimos_d_fuse_getattr);
-	assert(my_operations.read==&deimos_d_fuse_read);
-	assert(my_operations.readdir==&deimos_d_fuse_readdir);
+	assert(my_operations.getattr==&deimos_d_fuse_safe_getattr);
+	assert(my_operations.read==&deimos_d_fuse_safe_read);
+	assert(my_operations.readdir==&deimos_d_fuse_safe_readdir);
 	my_operations.flag_nullpath_ok=operations.isNullPathOk;
 	return fuse_main_real(cast(int)c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
 }
@@ -602,6 +602,10 @@ struct fuse_operations {
 
 unittest {
 	writefln("All members: %s", [__traits(allMembers, fuse_operations)]);
+	pragma(msg, "Bitfield: %s"~ bitfields!(
+		bool, "flag_nullpath_ok", 1,
+		uint, "flag_reserved", 31));
+
 	writefln("%s", createSafeWrappers!(fuse_operations, "deimos_d_fuse_")());
 }
 /** Extra context that may be needed by some filesystems
@@ -695,7 +699,7 @@ struct fuse_conn_info {
 	 */
 	uint[25] reserved;
 }
-//mixin(createSafeWrappers!(fuse_operations, "deimos_d_fuse_")());
+mixin(createSafeWrappers!(fuse_operations, "deimos_d_fuse_")());
 	
 int deimos_d_fuse_getattr (in char*  path, stat_t * info) {
 	auto context=fuse_get_context();

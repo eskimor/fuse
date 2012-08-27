@@ -111,70 +111,70 @@ string initializeFuncPtrStruct(StructType, string struct_name, string prefix)() 
 }
 
 string createSafeWrappers(StructType, string used_prefix)() {
-	string results;
+	string results="import std.exception;\n";
 	int alias_count=0;
 	string alias_defs;
 	foreach(member; __traits(allMembers, StructType)) {
 		StructType my_struct;
-		//auto method=mixin("&"~StructType.stringof~"."~member);
-		auto method=mixin("my_struct."~member);
-		if(!isFunctionPointer!(method))
-			continue;
-		alias ReturnType!method return_type;
-		results~=return_type.stringof~" "~used_prefix~"safe_"~member~"(";
-		int last_par=-1;
-		foreach(i, p; ParameterTypeTuple!method) {
-			results~=flagsToString!ParameterStorageClass(ParameterStorageClassTuple!(method)[i])~" ";
-			if("extern".length<p.stringof.length && "extern"==p.stringof[0.."extern".length]) {
-				alias_defs~="alias "~p.stringof~" work_around_"~to!string(alias_count)~";\n";
-				results~="work_around_"~to!string(alias_count);
-				alias_count++;
+		mixin("alias my_struct."~member~" method;");
+		static if(isFunctionPointer!method){
+			results~="static if(__traits(compiles, &"~used_prefix~member~")) {\n";
+			alias ReturnType!(method) return_type;
+			results~=return_type.stringof~" "~used_prefix~"safe_"~member~"(";
+			int last_par=-1;
+			foreach(i, p; ParameterTypeTuple!method) {
+				results~=flagsToString!ParameterStorageClass(ParameterStorageClassTuple!(method)[i])~" ";
+				if("extern".length<p.stringof.length && "extern"==p.stringof[0.."extern".length]) {
+					alias_defs~="alias "~p.stringof~" work_around_"~to!string(alias_count)~";\n";
+					results~="work_around_"~to!string(alias_count);
+					alias_count++;
+				}
+				else {
+					results~=p.stringof;
+				}
+				results~=" par"~to!string(i)~",";
+				last_par=i;
 			}
-			else {
-				results~=p.stringof;
+			if(results[$-1]==',')
+				results=results[0..$-1]~')';
+			else
+				results~=')';
+			results~=" "~flagsToString!FunctionAttribute(functionAttributes!method);
+			static if(is (return_type : void)) 
+				results~="{\n\ttry{\n\t\t"~used_prefix~member~"(";
+			else
+				results~="{\n\ttry{\n\t\treturn "~used_prefix~member~"(";
+			for(int i=0; i<=last_par; i++) {
+				results~="par"~to!string(i)~",";
 			}
-			results~=" par"~to!string(i)~",";
-			last_par=i;
+			if(results[$-1]==',')
+				results=results[0..$-1]~");\n\t}";
+			else
+				results~=");\n\t}";
+			results~="\n\tcatch(ErrnoException e) {\n";
+			static if(is (return_type == int) )
+				results~="\t\treturn -e.errno;\n\t}\n";
+			else static if(is (return_type : void*) )
+				results~="\t\treturn null;\n\t}\n";
+			else static if(is (return_type : bool) ) 
+				results~="\t\treturn false;\n\t}\n";
+			else static if(is (return_type : void))
+				results~="\t}\n";
+			else 
+				assert(0);
+			results~="\tcatch(Exception e) {\n";
+			static if(is (return_type == int) )
+				results~="\t\treturn -ENOTRECOVERABLE;\n\t}\n";
+			else static if(is (return_type : void*) )
+				results~="\t\treturn null;\n\t}\n";
+			else static if(is (return_type : bool) ) 
+				results~="\t\treturn false;\n\t}\n";
+			else static if(is (return_type : void))
+				results~="\t}\n";
+			else 
+				assert(0);
+			results~="}\n}\n";
 		}
-		if(results[$-1]==',')
-			results=results[0..$-1]~')';
-		else
-			results~=')';
-		results~=" "~flagsToString!FunctionAttribute(functionAttributes!method);
-		static if(is (return_type : void)) 
-			results~="{\n\ttry{\n\t\t"~used_prefix~member~"(";
-		else
-			results~="{\n\ttry{\n\t\treturn "~used_prefix~member~"(";
-		for(int i=0; i<=last_par; i++) {
-			results~="par"~to!string(i)~",";
-		}
-		if(results[$-1]==',')
-			results=results[0..$-1]~");\n\t}";
-		else
-			results~=");\n\t}";
-		results~="\n\tcatch(ErrnoException e) {\n";
-		static if(is (return_type == int) )
-			results~="\t\treturn -e.errno;\n\t}\n";
-		else static if(is (return_type : void*) )
-			results~="\t\treturn null;\n\t}\n";
-		else static if(is (return_type : bool) ) 
-			results~="\t\treturn false;\n\t}\n";
-		else static if(is (return_type : void))
-			results~="\t}\n";
-		else 
-			assert(0);
-		results~="\tcatch(Exception e) {\n";
-		static if(is (return_type == int) )
-			results~="\t\treturn -ENOTRECOVERABLE;\n\t}\n";
-		else static if(is (return_type : void*) )
-			results~="\t\treturn null;\n\t}\n";
-		else static if(is (return_type : bool) ) 
-			results~="\t\treturn false;\n\t}\n";
-		else static if(is (return_type : void))
-			results~="\t}\n";
-		else 
-			assert(0);
-		results~="}\n";
 	}
 	return alias_defs~results;
 }
@@ -210,7 +210,7 @@ unittest {
 	int function (in char* , off_t) truncate;
 	void function(in int a) haha;
 	}
-	enum buf=createSafeWrappers!(Test1, "haha_");
+	enum buf=createSafeWrappers!(Test1, "haha_")();
 	writefln("%s", buf);
 	//mixin(createImplementation!(MyInterface, "MyImplementation")());
 	//auto impl=new MyImplementation(); // Must be instantiable!
