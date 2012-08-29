@@ -188,21 +188,23 @@ class ForwardFs : FuseOperations {
 		return 0;
 	}
 	
-	override int getxattr (in const (char)[] path, in const (char)[] name, ubyte[] data, in ref AccessContext context) {
+	override ssize_t getxattr (in const (char)[] path, in const (char)[] name, ubyte[] data, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(xattr.getxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length)<0)
+		ssize_t length=xattr.getxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length);
+		if(length<0)
 			return -errno;
-		return 0;
+		return length;
 	}
 
 	
-	override int listxattr (in const (char)[] path, char[] list, in ref AccessContext context) {
+	override ssize_t listxattr (in const (char)[] path, char[] list, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(xattr.listxattr(get_forwarding_path(path.idup).toStringz(), list.ptr, list.length)<0)
+		ssize_t length=xattr.listxattr(get_forwarding_path(path.idup).toStringz(), list.ptr, list.length);
+		if(length<0)
 			return -errno;
-		return 0;
+		return length;
 	}
 
 	override int removexattr (in const (char)[] path, in const (char)[] name, in ref AccessContext context) {
@@ -359,6 +361,7 @@ class ForwardFs : FuseOperations {
 				return;
 			errnoEnforce(unistd.setreuid(our_euid_, uid)==0, "setreuid (swapping ids) failed!"); // Make sure we can gain back our idendity on BSD.
 			errnoEnforce(unistd.setregid(our_egid_, gid)==0, "setregid (swapping ids) failed!");
+				
 		}
 		/**
 		 * Throws:
@@ -405,6 +408,6 @@ class ForwardFs : FuseOperations {
 
 
 void main(string[] args) {
-	auto myfs=new ForwardFs();
+	auto myfs=new ForwardFs("/", true);
 	fuse_main(args, myfs);
 }

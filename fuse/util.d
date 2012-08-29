@@ -56,7 +56,7 @@ string createImplementation(ClassType, string classname)(bool[string] methods_to
 			results~=`{
 		writefln("Not implemented method called: %s", "`~name~`");
 `;
-			static if(is (return_type == int) )
+			static if(isIntegral!return_type && isSigned!return_type)
 				results~="\t\treturn -ENOSYS;\n\t}\n";
 			else static if(is (return_type : void*) )
 				results~="\t\treturn null;\n\t}\n";
@@ -82,7 +82,7 @@ unittest {
 		void testExtern(type_t t);
 	}
 	enum buf=createImplementation!(MyInterface, "MyImplementation")();	
-	writefln("%s", buf);
+	//writefln("%s", buf);
 	mixin(createImplementation!(MyInterface, "MyImplementation")());
 	auto impl=new MyImplementation(); // Must be instantiable!
 }
@@ -178,43 +178,6 @@ string createSafeWrappers(StructType, string used_prefix)() {
 	}
 	return alias_defs~results;
 }
-unittest {
-	import core.sys.posix.sys.types;
-	struct Test1 {
-		int function (in char* , mode_t, dev_t) mknod;
-
-	int function (in char* , mode_t) mkdir;
-
-
-	int function (in char* ) unlink;
-
-
-	int function (in char* ) rmdir;
-
-
-	int function (in char* , in char* ) symlink;
-
-
-	int function (in char* , in char* ) rename;
-
-
-	int function (in char* , in char* ) link;
-
-
-	int function (in char* , mode_t) chmod;
-
-
-	int function (in char* , uid_t, gid_t) chown;
-
-
-	int function (in char* , off_t) truncate;
-	void function(in int a) haha;
-	}
-	enum buf=createSafeWrappers!(Test1, "haha_")();
-	writefln("%s", buf);
-	//mixin(createImplementation!(MyInterface, "MyImplementation")());
-	//auto impl=new MyImplementation(); // Must be instantiable!
-}
 
 version(unittest) {
 struct Test {
@@ -224,7 +187,7 @@ struct Test {
 void my_test() {}
 }
 unittest {
-	writefln(initializeFuncPtrStruct!(Test, "my_struct", "my_")());
+//	writefln(initializeFuncPtrStruct!(Test, "my_struct", "my_")());
 	mixin(initializeFuncPtrStruct!(Test, "my_struct", "my_")());
 	assert(my_struct.test==&my_test);
 	assert(my_struct.test1==null);

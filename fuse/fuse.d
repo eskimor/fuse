@@ -184,13 +184,13 @@ interface FuseOperationsInterface {
 	int setxattr (in const(char)[] path, in const(char)[] name, in const(ubyte)[] data, int flags, in ref AccessContext context);
 
 	/** Get extended attributes */
-	int getxattr (in const(char)[] path, in const(char)[] name, ubyte[] data, in ref AccessContext context);
+	ssize_t getxattr (in const(char)[] path, in const(char)[] name, ubyte[] data, in ref AccessContext context);
 
 	/** List extended attributes */
 	/**
 	 * @param list Provide all attribute names separated by '\0'.
 	 */
-	int listxattr (in const(char)[] path, char[] list, in ref AccessContext context);
+	ssize_t listxattr (in const(char)[] path, char[] list, in ref AccessContext context);
 
 	/** Remove extended attributes */
 	int removexattr (in const(char)[] path, in const(char)[] name, in ref AccessContext context);
@@ -424,14 +424,14 @@ int fuse_main(const(char[])[] args, FuseOperationsInterface operations) {
 	foreach(i, arg; args) 
 		c_args[i]=arg.ptr;
 	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_safe_")());
-	debug(fuse) writefln("Initialize struct: ");
-	debug(fuse) writefln(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_safe_")());
-	
-	assert(my_operations.getattr==&deimos_d_fuse_safe_getattr);
-	assert(my_operations.read==&deimos_d_fuse_safe_read);
-	assert(my_operations.readdir==&deimos_d_fuse_safe_readdir);
 	my_operations.flag_nullpath_ok=operations.isNullPathOk;
 	return fuse_main_real(cast(int)c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
+//	mixin(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_fuse_")());
+//	debug(fuse) writefln("Initialize struct: ");
+//	debug(fuse) writefln(initializeFuncPtrStruct!(fuse_operations, "my_operations", "deimos_d_safe_")());
+//	
+//	my_operations.flag_nullpath_ok=operations.isNullPathOk;
+//	return fuse_main_real(cast(int)c_args.length, c_args.ptr, &my_operations, my_operations.sizeof, cast(void*) operations);
 }
 
 extern(C):
@@ -600,14 +600,6 @@ struct fuse_operations {
 	int function (in char* , fuse_file_info *, fuse_pollhandle *ph, uint *reventsp) poll;
 }
 
-unittest {
-	writefln("All members: %s", [__traits(allMembers, fuse_operations)]);
-	pragma(msg, "Bitfield: %s"~ bitfields!(
-		bool, "flag_nullpath_ok", 1,
-		uint, "flag_reserved", 31));
-
-	writefln("%s", createSafeWrappers!(fuse_operations, "deimos_d_fuse_")());
-}
 /** Extra context that may be needed by some filesystems
  *
  * The uid, gid and pid fields are not filled in case of a writepage
@@ -835,14 +827,14 @@ int deimos_d_fuse_setxattr (in char* path, in char* name, in ubyte* data, size_t
 int deimos_d_fuse_getxattr (in char* path, in char* name, ubyte *data, size_t length) {
 	auto context=fuse_get_context();
 	auto ops=cast(FuseOperationsInterface)context.private_data;
-	return ops.getxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length), AccessContext(context));
+	return cast(int)ops.getxattr(cString2DString(path), cString2DString(name), cArray2DArray(data, length), AccessContext(context));
 }
 
 
 int deimos_d_fuse_listxattr (in char* path, char *attributes, size_t length) {
 	auto context=fuse_get_context();
 	auto ops=cast(FuseOperationsInterface)context.private_data;
-	return ops.listxattr(cString2DString(path), cArray2DArray(attributes, length), AccessContext(context));
+	return cast(int)ops.listxattr(cString2DString(path), cArray2DArray(attributes, length), AccessContext(context));
 }
 
 

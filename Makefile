@@ -7,7 +7,7 @@ CFLAGS=-D_FILE_OFFSET_BITS=64
 DMDFLAGS=-property -unittest -debug=fuse -L-lfuse
 .phony: all
 .phony: clean
-all: c/sys/c_defs.d examples/hello
+all:  examples/hello examples/forwardfs
 clean: 
 	rm -f examples/*.o examples/*.o examples/hello examples/forwardfs
 c_util/provideCsTypeDefs: c_util/provideCsTypeDefs.cc
