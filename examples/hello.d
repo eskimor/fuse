@@ -7,16 +7,16 @@ enum O_RDONLY=0;
 class HelloFs : FuseOperations {
 	override int getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context) {
 		int res = 0;
-		memset(stat_buf, 0, stat_t.sizeof);
+		memset(stbuf, 0, stat_t.sizeof);
 		if(path=="/") {
-			stat_buf.st_mode = S_IFDIR | octal!755;
-			stat_buf.st_nlink = 2;
+			stbuf.st_mode = S_IFDIR | octal!755;
+			stbuf.st_nlink = 2;
 		}
 		else if(path==hello_path) {
 			writefln("hello_path requested!");
-			stat_buf.st_mode = S_IFREG | octal!444;
-			stat_buf.st_nlink = 1;
-			stat_buf.st_size = hello_str.length;
+			stbuf.st_mode = S_IFREG | octal!444;
+			stbuf.st_nlink = 1;
+			stbuf.st_size = hello_str.length;
 		}
 		else
 			res = -ENOENT;
@@ -36,7 +36,7 @@ class HelloFs : FuseOperations {
 		if(path!=hello_path)
 			return -ENOENT;
 
-		if((fi.flags & 3) != O_RDONLY)
+		if((info.flags & 3) != O_RDONLY)
 			return -EACCES;
 
 		return 0;
