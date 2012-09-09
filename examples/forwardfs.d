@@ -359,9 +359,8 @@ class ForwardFs : FuseOperations {
 		void setEffectiveIds(uid_t uid, gid_t gid) {
 			if(!do_seteids_)
 				return;
+			errnoEnforce(unistd.setregid(our_egid_, gid)==0, "setregid (swapping ids) failed!"); // First set gid our new euid might not allow setting the gid to the given value.
 			errnoEnforce(unistd.setreuid(our_euid_, uid)==0, "setreuid (swapping ids) failed!"); // Make sure we can gain back our idendity on BSD.
-			errnoEnforce(unistd.setregid(our_egid_, gid)==0, "setregid (swapping ids) failed!");
-				
 		}
 		/**
 		 * Throws:
@@ -381,8 +380,8 @@ class ForwardFs : FuseOperations {
 		void setRealIds(uid_t uid, gid_t gid) {
 			if(!do_seteids_)
 				return;
-			errnoEnforce(unistd.setreuid(uid, -1)==0, "setuid failed!");
 			errnoEnforce(unistd.setregid(gid, -1)==0, "setgid failed!");
+			errnoEnforce(unistd.setreuid(uid, -1)==0, "setuid failed!");
 		}
 		/**
 		 * Throws:
