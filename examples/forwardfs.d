@@ -49,7 +49,7 @@ class ForwardFs : FuseOperations {
 	override void getattr (in const (char)[] path, stat_t * stat_buf, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		errnoEnforce(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)==);		
+		errnoEnforce(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)==0);		
 	}
 	
 	override void opendir (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
@@ -88,9 +88,10 @@ class ForwardFs : FuseOperations {
 			filler(buf, entry.d_name.ptr, null, 0);
 			retval=dirent_m.readdir_r(dir, &entry, &p);
 		}
-		if(retval!=0)
+		if(retval!=0) {
 			errno=retval; // For the sake of consistency.
-		throw new ErrnoException();
+			throw new ErrnoException("");
+		}
 	}
 	
 	override void open (in const (char)[] path, fuse_file_info * fi, in ref AccessContext context) {
@@ -162,7 +163,10 @@ class ForwardFs : FuseOperations {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		ssize_t length=xattr.getxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length);
-		errnoEnforce(length>=0);
+		//errnoEnforce(length>=0); Don't throw exception here, happens far too often! (Every time no data is available. a zero return would have been enough, but ok that's how it is.)
+		errnoEnforce(length>=0 || errno==ENODATA);
+		if(length<0)
+			return -errno;
 		return length;
 	}
 
@@ -193,7 +197,7 @@ class ForwardFs : FuseOperations {
 		errnoEnforce(unistd.truncate(get_forwarding_path(path.idup).toStringz(), length)==0);
 	}
 	
-	override int utimens (in const (char)[] path, const timespec tv[], in ref AccessContext context) {
+	override void utimens (in const (char)[] path, const timespec tv[], in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
@@ -249,11 +253,11 @@ class ForwardFs : FuseOperations {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
-	    ssize_t len;
-		len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length-1);
+	    ssize_t len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length-1);
 		errnoEnforce(len>=0);
 		assert(len>buf.length-1);
-		buf[len]='\0';
+		assert(buf.length>0);
+		buf[len]=0;
 	}
 	
 	override void symlink (in const (char)[] to, in const (char)[] path, in ref AccessContext context) {
@@ -354,6 +358,6 @@ class ForwardFs : FuseOperations {
 
 
 void main(string[] args) {
-	auto myfs=new ForwardFs("/", true);
+	auto myfs=new ForwardFs("/", false);
 	fuse_main(args, myfs);
 }

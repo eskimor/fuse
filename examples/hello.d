@@ -3,10 +3,10 @@ import std.conv;
 import std.c.string;
 import c.sys.fcntl;
 import std.stdio;
+import std.exception;
 enum O_RDONLY=0;
 class HelloFs : FuseOperations {
-	override int getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context) {
-		int res = 0;
+	override void getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context) {
 		memset(stbuf, 0, stat_t.sizeof);
 		if(path=="/") {
 			stbuf.st_mode = S_IFDIR | octal!755;
@@ -18,32 +18,37 @@ class HelloFs : FuseOperations {
 			stbuf.st_nlink = 1;
 			stbuf.st_size = hello_str.length;
 		}
-		else
-			res = -ENOENT;
-
-		return res;
+		else {
+			errno=ENOENT;
+			throw new ErrnoException("");
+		}
 	}
-	override int readdir (in const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset, fuse_file_info *info, in ref AccessContext context) {
-		if(path!="/")
-			return -ENOENT;
+	override void readdir (in const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset, fuse_file_info *info, in ref AccessContext context) {
+		if(path!="/") {
+			errno=ENOENT;
+			throw new ErrnoException("");
+		}
 		
 		filler(buf, ".", null, 0);
 		filler(buf, "..", null, 0);
 		filler(buf, hello_path.ptr+1, null, 0);
-		return 0;
 	}
-	override int open (in const(char)[] path, fuse_file_info *info, in ref AccessContext context) {
-		if(path!=hello_path)
-			return -ENOENT;
+	override void open (in const(char)[] path, fuse_file_info *info, in ref AccessContext context) {
+		if(path!=hello_path) {
+			errno=ENOENT;
+			throw new ErrnoException("");
+		}
 
-		if((info.flags & 3) != O_RDONLY)
-			return -EACCES;
-
-		return 0;
+		if((info.flags & 3) != O_RDONLY) {
+			errno=-EACCES;
+			throw new ErrnoException("");
+		}
 	}
 	override int read (in const(char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info , in ref AccessContext context) {
-		if(path!=hello_path)
-			return -ENOENT;
+		if(path!=hello_path) {
+			errno=ENOENT;
+			throw new ErrnoException("");
+		}
 		writefln("Passed buf length: %s", readbuf.length);
 		writefln("Passed offset: %s", offset);
 		size_t len = hello_str.length-cast(size_t)offset; // Cast save, hello world will never be larger than 2GB.

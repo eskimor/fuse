@@ -4,7 +4,7 @@ forward_sources=$(sources) examples/forwardfs.d
 c_sources=fuse/struct_checks.o
 
 CFLAGS=-D_FILE_OFFSET_BITS=64
-DMDFLAGS=-property -unittest -debug=fuse -L-lfuse
+DMDFLAGS=-property -unittest -debug=fuse -L-lfuse 
 .phony: all
 .phony: clean
 all:  examples/hello examples/forwardfs

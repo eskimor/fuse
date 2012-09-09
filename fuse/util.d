@@ -111,14 +111,15 @@ string initializeFuncPtrStruct(StructType, string struct_name, string prefix)() 
 }
 
 string createSafeWrappers(StructType, string used_prefix)() {
-	string results="import std.exception;\n";
+	string results="import std.exception;\nimport std.traits;";
 	int alias_count=0;
 	string alias_defs;
 	foreach(member; __traits(allMembers, StructType)) {
 		StructType my_struct;
+		string free_function=used_prefix~member;
 		mixin("alias my_struct."~member~" method;");
 		static if(isFunctionPointer!method){
-			results~="static if(__traits(compiles, &"~used_prefix~member~")) {\n";
+			results~="static if(__traits(compiles, &"~free_function~")) {\n";
 			alias ReturnType!(method) return_type;
 			results~=return_type.stringof~" "~used_prefix~"safe_"~member~"(";
 			int last_par=-1;
@@ -140,18 +141,31 @@ string createSafeWrappers(StructType, string used_prefix)() {
 			else
 				results~=')';
 			results~=" "~flagsToString!FunctionAttribute(functionAttributes!method);
-			static if(is (return_type : void)) 
-				results~="{\n\ttry{\n\t\t"~used_prefix~member~"(";
+			results~=`{
+	try{
+		alias ReturnType!(`~free_function~`) free_return;`;
+			if(is( return_type : void))	
+				results~="\n\t\tstatic if(false) {";
 			else
-				results~="{\n\ttry{\n\t\treturn "~used_prefix~member~"(";
+				results~=`	
+		static if(is (free_return : void)) {`; // Necessary because returning void from int returning function is not allowed.
+			string buf=free_function~"(";
 			for(int i=0; i<=last_par; i++) {
-				results~="par"~to!string(i)~",";
+				buf~="par"~to!string(i)~",";
 			}
-			if(results[$-1]==',')
-				results=results[0..$-1]~");\n\t}";
+			if(buf[$-1]==',')
+				buf=buf[0..$-1]~");";
 			else
-				results~=");\n\t}";
-			results~="\n\tcatch(ErrnoException e) {\n";
+				buf~=");";
+			results~=`
+			`~buf~`
+			return 0;
+		}
+		else {
+			return `~buf~`
+		}`;
+			results~="\n\t}\n\tcatch(ErrnoException e) {\n\t\tdebug(fuse)stderr.writefln(\"Exception: %s\", e);\n";
+			
 			static if(is (return_type == int) )
 				results~="\t\treturn -e.errno;\n\t}\n";
 			else static if(is (return_type : void*) )
