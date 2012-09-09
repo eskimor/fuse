@@ -26,7 +26,7 @@ interface FuseOperationsInterface {
 	 * ignored.	 The 'st_ino' field is ignored except if the 'use_ino'
 	 * mount option is given.
 	 */
-	int getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context);
+	void getattr (in const(char)[] path, stat_t* stbuf, in ref AccessContext context);
 
 	/** Read the target of a symbolic link
 	 *
@@ -36,7 +36,7 @@ interface FuseOperationsInterface {
 	 * buffer, it should be truncated.	The return value should be 0
 	 * for success.
 	 */
-	int readlink (in const(char)[] path, ubyte[] buf, in ref AccessContext context);
+	void readlink (in const(char)[] path, ubyte[] buf, in ref AccessContext context);
 
 	/** Create a file node
 	 *
@@ -44,7 +44,7 @@ interface FuseOperationsInterface {
 	 * nodes.  If the filesystem defines a create() method, then for
 	 * regular files that will be called instead.
 	 */
-	int mknod (in const(char)[] path, mode_t mode, dev_t dev, in ref AccessContext context);
+	void mknod (in const(char)[] path, mode_t mode, dev_t dev, in ref AccessContext context);
 
 	/** Create a directory 
 	 *
@@ -52,31 +52,31 @@ interface FuseOperationsInterface {
 	 * bits set, i.e. S_ISDIR(mode) can be false.  To obtain the
 	 * correct directory type bits use  mode|S_IFDIR
 	 * */
-	int mkdir (in const(char)[] path, mode_t mode, in ref AccessContext context);
+	void mkdir (in const(char)[] path, mode_t mode, in ref AccessContext context);
 
 	/** Remove a file */
-	int unlink (in const(char)[] path, in ref AccessContext context);
+	void unlink (in const(char)[] path, in ref AccessContext context);
 
 	/** Remove a directory */
-	int rmdir (in const(char)[] path, in ref AccessContext context);
+	void rmdir (in const(char)[] path, in ref AccessContext context);
 
 	/** Create a symbolic link */
-	int symlink (in const(char)[] to, in const(char)[] path, in ref AccessContext context);
+	void symlink (in const(char)[] to, in const(char)[] path, in ref AccessContext context);
 
 	/** Rename a file */
-	int rename (in const(char)[] path, in const(char)[] to, in ref AccessContext context);
+	void rename (in const(char)[] path, in const(char)[] to, in ref AccessContext context);
 
 	/** Create a hard link to a file */
-	int link (in const(char)[] path, in const(char)[] to, in ref AccessContext context);
+	void link (in const(char)[] path, in const(char)[] to, in ref AccessContext context);
 
 	/** Change the permission bits of a file */
-	int chmod (in const(char)[] path, mode_t mode, in ref AccessContext context);
+	void chmod (in const(char)[] path, mode_t mode, in ref AccessContext context);
 
 	/** Change the owner and group of a file */
-	int chown (in const(char)[] path, uid_t uid, gid_t gid, in ref AccessContext context);
+	void chown (in const(char)[] path, uid_t uid, gid_t gid, in ref AccessContext context);
 
 	/** Change the size of a file */
-	int truncate (in const(char)[] path, off_t length, in ref AccessContext context);
+	void truncate (in const(char)[] path, off_t length, in ref AccessContext context);
 
 	/** File open operation
 	 *
@@ -95,7 +95,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int open (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
+	void open (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Read data from an open file
 	 *
@@ -128,7 +128,7 @@ interface FuseOperationsInterface {
 	 * Replaced 'struct statfs' parameter with 'struct statvfs' in
 	 * version 2.5
 	 */
-	int statfs (in const(char)[] path, statvfs_t *stbuf, in ref AccessContext context);
+	void statfs (in const(char)[] path, statvfs_t *stbuf, in ref AccessContext context);
 
 	/** Possibly flush cached data
 	 *
@@ -153,7 +153,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int flush (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
+	void flush (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Release an open file
 	 *
@@ -169,7 +169,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int release (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
+	void release (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Synchronize file contents
 	 *
@@ -178,10 +178,10 @@ interface FuseOperationsInterface {
 	 *
 	 * Changed in version 2.2
 	 */
-	int fsync (in const(char)[] path, bool onlyldatasync, fuse_file_info *info, in ref AccessContext context);
+	void fsync (in const(char)[] path, bool onlyldatasync, fuse_file_info *info, in ref AccessContext context);
 
 	/** Set extended attributes */
-	int setxattr (in const(char)[] path, in const(char)[] name, in const(ubyte)[] data, int flags, in ref AccessContext context);
+	void setxattr (in const(char)[] path, in const(char)[] name, in const(ubyte)[] data, int flags, in ref AccessContext context);
 
 	/** Get extended attributes */
 	ssize_t getxattr (in const(char)[] path, in const(char)[] name, ubyte[] data, in ref AccessContext context);
@@ -193,7 +193,7 @@ interface FuseOperationsInterface {
 	ssize_t listxattr (in const(char)[] path, char[] list, in ref AccessContext context);
 
 	/** Remove extended attributes */
-	int removexattr (in const(char)[] path, in const(char)[] name, in ref AccessContext context);
+	void removexattr (in const(char)[] path, in const(char)[] name, in ref AccessContext context);
 
 	/** Open directory
 	 *
@@ -205,7 +205,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int opendir (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
+	void opendir (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Read directory
 	 *
@@ -228,14 +228,14 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int readdir (in const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset,
+	void readdir (in const(char)[] path, void * buf, fuse_fill_dir_t filler, off_t offset,
 			fuse_file_info *info, in ref AccessContext context);
 
 	/** Release directory
 	 *
 	 * Introduced in version 2.3
 	 */
-	int releasedir (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
+	void releasedir (in const(char)[] path, fuse_file_info *info, in ref AccessContext context);
 
 	/** Synchronize directory contents
 	 *
@@ -244,7 +244,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.3
 	 */
-	int fsyncdir (in const(char)[] path, int, fuse_file_info *info, in ref AccessContext context);
+	void fsyncdir (in const(char)[] path, int, fuse_file_info *info, in ref AccessContext context);
 	
 	/**
 	 * Initialize filesystem.
@@ -274,7 +274,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int access (in const(char)[] path, int mask, in ref AccessContext context);
+	void access (in const(char)[] path, int mask, in ref AccessContext context);
 
 	/**
 	 * Create and open a file
@@ -288,7 +288,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int create (in const(char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context);
+	void create (in const(char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Change the size of an open file
@@ -302,7 +302,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int ftruncate (in const(char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context);
+	void ftruncate (in const(char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Get attributes from an open file
@@ -316,7 +316,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.5
 	 */
-	int fgetattr (in const(char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context);
+	void fgetattr (in const(char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context);
 
 	/**
 	 * Perform POSIX file locking operation
@@ -350,7 +350,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int lock (in const(char)[] path, fuse_file_info *info, int cmd, flock *locks, in ref AccessContext context);
+	void lock (in const(char)[] path, fuse_file_info *info, int cmd, flock *locks, in ref AccessContext context);
 
 	/**
 	 * Change the access and modification times of a file with
@@ -358,7 +358,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int utimens (in const(char)[] path, const timespec tv[], in ref AccessContext context);
+	void utimens (in const(char)[] path, const timespec tv[], in ref AccessContext context);
 
 	/**
 	 * Map block index within file to block index within device
@@ -368,7 +368,7 @@ interface FuseOperationsInterface {
 	 *
 	 * Introduced in version 2.6
 	 */
-	int bmap (in const(char)[] path, size_t blocksize, ulong *idx, in ref AccessContext context);
+	void bmap (in const(char)[] path, size_t blocksize, ulong *idx, in ref AccessContext context);
 	
 
 

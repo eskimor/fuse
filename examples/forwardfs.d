@@ -41,42 +41,32 @@ class ForwardFs : FuseOperations {
 			our_egid_=unistd.getegid();
 		}
 	}
-	override int access (in const (char)[] path, int mask, in ref AccessContext context) {
+	override void access (in const (char)[] path, int mask, in ref AccessContext context) {
 		setRealIds(context.uid, context.gid); 
 		scope(exit) restoreRealIds();
-		if(unistd.access(get_forwarding_path(path.idup).toStringz(), mask)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(unistd.access(get_forwarding_path(path.idup).toStringz(), mask)==0);
 	}
-	override int getattr (in const (char)[] path, stat_t * stat_buf, in ref AccessContext context) {
+	override void getattr (in const (char)[] path, stat_t * stat_buf, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)<0)
-			return -errno;
-		return 0;
-		
+		errnoEnforce(lstat(get_forwarding_path(path.idup).toStringz(), stat_buf)==);		
 	}
 	
-	override int opendir (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
+	override void opendir (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto dir=dirent_m.opendir(get_forwarding_path(path.idup).toStringz()); 
-		if(!dir) {
-			return -errno;
-		}
+		errnoEnforce(dir);
 		info.fh=cast(ulong)(dir);
 		stderr.writefln("Set fh to: %s", info.fh);
-		return 0;
 	}
-	int releasedir (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
+	override void releasedir (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto dir=cast(dirent_m.DIR*)(info.fh);
-		if(dirent_m.closedir(dir)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(dirent_m.closedir(dir)==0);
 	}
-	override int readdir (in const (char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info * info, in ref AccessContext context) {
+	override void readdir (in const (char)[] path, void * buf, fuse_fill_dir_t filler, off_t, fuse_file_info * info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		dirent_m.DIR* dir;
@@ -89,9 +79,7 @@ class ForwardFs : FuseOperations {
 			auto mpath=get_forwarding_path(path.idup);
 			dir=dirent_m.opendir(mpath.toStringz());
 			scope(exit) dirent_m.closedir(dir);
-			if(!dir) {
-				return -errno;
-			}
+			errnoEnforce(dir);
 		}
 		dirent_m.dirent entry;
 		dirent_m.dirent *p;
@@ -100,53 +88,42 @@ class ForwardFs : FuseOperations {
 			filler(buf, entry.d_name.ptr, null, 0);
 			retval=dirent_m.readdir_r(dir, &entry, &p);
 		}
-		return -retval;
+		if(retval!=0)
+			errno=retval; // For the sake of consistency.
+		throw new ErrnoException();
 	}
 	
-	override int open (in const (char)[] path, fuse_file_info * fi, in ref AccessContext context) {
+	override void open (in const (char)[] path, fuse_file_info * fi, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		assert(fi);
 		int opened=fcntl.open(get_forwarding_path(path.idup).toStringz(), fi.flags);
+		errnoEnforce(opened>=0);
 		fi.fh=opened;
-		if(opened<0)
-			return -errno;
-		return 0;
 	}
-	override int create (in const (char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context) {
+	override void create (in const (char)[] path, mode_t mode, fuse_file_info *info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		assert(info);
 		int opened=fcntl.creat(get_forwarding_path(path.idup).toStringz(), mode);
-		info.fh=opened;
-		if(opened<0)
-			return -errno;
-		return 0;
+		errnoEnforce(opened>=0);
 	}
-	override int mknod (in const (char)[] path, mode_t mode, dev_t dev, in ref AccessContext context) {
+	override void mknod (in const (char)[] path, mode_t mode, dev_t dev, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(stat.mknod(get_forwarding_path(path.idup).toStringz(), mode, dev)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(stat.mknod(get_forwarding_path(path.idup).toStringz(), mode, dev)==0);
 	}
-	override int unlink (in const (char)[] path, in ref AccessContext context) {
+	override void unlink (in const (char)[] path, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
-		if(unistd.unlink(mpath.toStringz())<0)
-			return -errno;
-		return 0;
-		
+		errnoEnforce(unistd.unlink(mpath.toStringz())==0);		
 	}
-	override int release (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
+	override void release (in const (char)[] path, fuse_file_info * info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		assert(info);
-		if(unistd.close(cast(int)(info.fh))<0)
-			return -errno;
-		return 0;
-		
+		errnoEnforce(unistd.close(cast(int)(info.fh))==0);
 	}
 	override int read (in const (char)[] path, ubyte[] readbuf, off_t offset, fuse_file_info * info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
@@ -154,9 +131,7 @@ class ForwardFs : FuseOperations {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		int count=cast(int)(unistd.pread(fd, readbuf.ptr, readbuf.length, offset));
-		if(count<0) {
-			return -errno;
-		}
+		errnoEnforce(count>=0);
 		return count;
 	}
 	override int write (in const (char)[] path, in const (ubyte)[] data, off_t offset, fuse_file_info *info, in ref AccessContext context) {
@@ -165,35 +140,29 @@ class ForwardFs : FuseOperations {
 		assert(info);
 		auto fd=cast(int)(info.fh);
 		int count=cast(int)unistd.pwrite(fd, data.ptr, data.length, offset);
-		if(count<0)
-			return -errno;
+		errnoEnforce(count>=0);
 		return count;
 	}
 	
-	override int fgetattr (in const (char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context) {
+	override void fgetattr (in const (char)[] path, stat_t *stbuf, fuse_file_info *info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		assert(info);
 		auto fd=cast(int)(info.fh);
-		if(fstat(fd, stbuf)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(fstat(fd, stbuf)==0);
 	}
 	
-	override int setxattr (in const (char)[] path, in const (char)[] name, in const (ubyte)[] data, int flags, in ref AccessContext context) {
+	override void setxattr (in const (char)[] path, in const (char)[] name, in const (ubyte)[] data, int flags, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(xattr.setxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length, flags)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(xattr.setxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length, flags)==0);
 	}
 	
 	override ssize_t getxattr (in const (char)[] path, in const (char)[] name, ubyte[] data, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		ssize_t length=xattr.getxattr(get_forwarding_path(path.idup).toStringz(), name.ptr, data.ptr, data.length);
-		if(length<0)
-			return -errno;
+		errnoEnforce(length>=0);
 		return length;
 	}
 
@@ -202,33 +171,26 @@ class ForwardFs : FuseOperations {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		ssize_t length=xattr.listxattr(get_forwarding_path(path.idup).toStringz(), list.ptr, list.length);
-		if(length<0)
-			return -errno;
+		errnoEnforce(length>=0);
 		return length;
 	}
 
-	override int removexattr (in const (char)[] path, in const (char)[] name, in ref AccessContext context) {
+	override void removexattr (in const (char)[] path, in const (char)[] name, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(xattr.removexattr(get_forwarding_path(path.idup).toStringz(), name.ptr)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(xattr.removexattr(get_forwarding_path(path.idup).toStringz(), name.ptr)==0);
 	}
-	override int ftruncate (in const (char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context) {
+	override void ftruncate (in const (char)[] path, off_t length, fuse_file_info *info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		assert(info);
 		auto fd=cast(int)(info.fh);
-		if(unistd.ftruncate(fd, length)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(unistd.ftruncate(fd, length)==0);
 	}
-	override int truncate (in const (char)[] path, off_t length, in ref AccessContext context) {
+	override void truncate (in const (char)[] path, off_t length, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
-		if(unistd.truncate(get_forwarding_path(path.idup).toStringz(), length)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(unistd.truncate(get_forwarding_path(path.idup).toStringz(), length)==0);
 	}
 	
 	override int utimens (in const (char)[] path, const timespec tv[], in ref AccessContext context) {
@@ -240,113 +202,89 @@ class ForwardFs : FuseOperations {
 			useconds_time[i].tv_sec=val.tv_sec;
 			useconds_time[i].tv_usec=val.tv_nsec/1000;
 		}
-		if(utimes(mpath.toStringz(), useconds_time)<0)
-			return -errno;
-		return 0;
+		errnoEnforce(utimes(mpath.toStringz(), useconds_time)==0);
 	}
 
-	override int flush (in const (char)[] path, fuse_file_info *info, in ref AccessContext context) {
-		setEffectiveIds(context.uid, context.gid);
-		scope(exit) restoreEffectiveIds();
-		return 0; // Not needed implied in close().
+	override void flush (in const (char)[] path, fuse_file_info *info, in ref AccessContext context) {
+		// Empty everything done in close.
 	}
 
-	override int chmod (in const (char)[] path, mode_t mode, in ref AccessContext context) {
+	override void chmod (in const (char)[] path, mode_t mode, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
-		return stat.chmod(mpath.toStringz(), mode);
+		errnoEnforce(stat.chmod(mpath.toStringz(), mode)==0);
 	}
 
-	override int chown (in const (char)[] path, uid_t uid, gid_t gid, in ref AccessContext context) {
+	override void chown (in const (char)[] path, uid_t uid, gid_t gid, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
-		return unistd.chown(mpath.toStringz(), uid, gid);
+		errnoEnforce(unistd.chown(mpath.toStringz(), uid, gid)==0);
 	}
 
-	override int mkdir (in const (char)[] path, mode_t mode, in ref AccessContext context) {
+	override void mkdir (in const (char)[] path, mode_t mode, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
-		return stat.mkdir(mpath.toStringz(), mode|S_IFDIR );
+		errnoEnforce(stat.mkdir(mpath.toStringz(), mode|S_IFDIR )==0);
 	}
 
-	override int rmdir (in const (char)[] path, in ref AccessContext context) {
+	override void rmdir (in const (char)[] path, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
-		return unistd.rmdir(mpath.toStringz());
+		errnoEnforce(unistd.rmdir(mpath.toStringz())==0);
 	}
 
-	override int rename (in const (char)[] path, in const (char)[] to, in ref AccessContext context) {
+	override void rename (in const (char)[] path, in const (char)[] to, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
 	    auto rpath=get_forwarding_path(to.idup);
-		return c_stdio.rename(mpath.toStringz(), rpath.toStringz());
+		errnoEnforce(c_stdio.rename(mpath.toStringz(), rpath.toStringz())==0);
 	}
 
-	override int readlink (in const (char)[] path, ubyte[] buf, in ref AccessContext context) {
+	override void readlink (in const (char)[] path, ubyte[] buf, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
 	    ssize_t len;
-		len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length);
-		if (len < 0) {	
-		   return -errno;
-		}
-		else if (len >= buf.length) {
-		   return cast(int)len;
-		}
-		else {
-		   buf[len]='\0';
-		   return 0;
-		}
+		len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length-1);
+		errnoEnforce(len>=0);
+		assert(len>buf.length-1);
+		buf[len]='\0';
 	}
 	
-	override int symlink (in const (char)[] to, in const (char)[] path, in ref AccessContext context) {
+	override void symlink (in const (char)[] to, in const (char)[] path, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
 
-		if (unistd.symlink(to.toStringz(), mpath.toStringz()) < 0)
-		   return -errno;
-		else 
-		   return 0;
+		errnoEnforce(unistd.symlink(to.toStringz(), mpath.toStringz()) ==0);
 	}
 
-	override int link (in const(char)[] path, in const(char)[] to, in ref AccessContext context) {
+	override void link (in const(char)[] path, in const(char)[] to, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
 		auto topath=get_forwarding_path(to.idup);
 
-		if (unistd.link(mpath.toStringz(), topath.toStringz()) < 0)
-		   return -errno;
-		else 
-		   return 0;
+		errnoEnforce(unistd.link(mpath.toStringz(), topath.toStringz()) ==0);
 	}
 
-	override int statfs (in const(char)[] path, statvfs_t *stbuf, in ref AccessContext context) {
+	override void statfs (in const(char)[] path, statvfs_t *stbuf, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto mpath=get_forwarding_path(path.idup);
-
-		if (statvfs.statvfs(mpath.toStringz(), stbuf) < 0)
-		   return -errno;
-		else 
-		   return 0;
+		errnoEnforce(statvfs.statvfs(mpath.toStringz(), stbuf) ==0);
 	}
 
-	override int fsync (in const(char)[] path, bool onlydatasync, fuse_file_info *info, in ref AccessContext context) {
+	override void fsync (in const(char)[] path, bool onlydatasync, fuse_file_info *info, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 		auto fd=cast(int)(info.fh);
-		auto retval= onlydatasync ? unistd.fdatasync(fd) : unistd.fsync(fd);
-		if(retval<0)
-			return -errno;
-		return 0;
+		errnoEnforce((onlydatasync ? unistd.fdatasync(fd) : unistd.fsync(fd))==0);
 	}
 	override bool isNullPathOk() @property {
 		return true;
