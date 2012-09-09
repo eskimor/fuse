@@ -339,6 +339,15 @@ class ForwardFs : FuseOperations {
 		   return 0;
 	}
 
+	override int fsync (in const(char)[] path, bool onlydatasync, fuse_file_info *info, in ref AccessContext context) {
+		setEffectiveIds(context.uid, context.gid);
+		scope(exit) restoreEffectiveIds();
+		auto fd=cast(int)(info.fh);
+		auto retval= onlydatasync ? unistd.fdatasync(fd) : unistd.fsync(fd);
+		if(retval<0)
+			return -errno;
+		return 0;
+	}
 	override bool isNullPathOk() @property {
 		return true;
 	}
