@@ -249,15 +249,19 @@ class ForwardFs : FuseOperations {
 		errnoEnforce(c_stdio.rename(mpath.toStringz(), rpath.toStringz())==0);
 	}
 
-	override void readlink (in const (char)[] path, ubyte[] buf, in ref AccessContext context) {
+	override int readlink (in const (char)[] path, ubyte[] buf, in ref AccessContext context) {
 		setEffectiveIds(context.uid, context.gid);
 		scope(exit) restoreEffectiveIds();
 	    auto mpath=get_forwarding_path(path.idup);
-	    ssize_t len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length-1);
+	    ssize_t len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length);
 		errnoEnforce(len>=0);
-		assert(len>buf.length-1);
+		assert(len>buf.length);
 		assert(buf.length>0);
+		assert(len>buf.length);
+		if(len>=buf.length)
+			return cast(int)len;
 		buf[len]=0;
+		return 0;
 	}
 	
 	override void symlink (in const (char)[] to, in const (char)[] path, in ref AccessContext context) {

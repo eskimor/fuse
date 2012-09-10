@@ -36,7 +36,7 @@ interface FuseOperationsInterface {
 	 * buffer, it should be truncated.	The return value should be 0
 	 * for success.
 	 */
-	void readlink (in const(char)[] path, ubyte[] buf, in ref AccessContext context);
+	int readlink (in const(char)[] path, ubyte[] buf, in ref AccessContext context);
 
 	/** Create a file node
 	 *
@@ -703,10 +703,10 @@ void deimos_d_fuse_getattr (in char*  path, stat_t * info) {
 	ops.getattr(cString2DString(path), info, AccessContext(context));
 }
 
-void deimos_d_fuse_readlink (in char*  path, ubyte * buf, size_t size) {
+int deimos_d_fuse_readlink (in char*  path, ubyte * buf, size_t size) {
 	auto context=fuse_get_context();
 	auto ops=cast(FuseOperationsInterface)context.private_data;
-	ops.readlink(cString2DString(path), cArray2DArray(buf, size), AccessContext(context));
+	return ops.readlink(cString2DString(path), cArray2DArray(buf, size), AccessContext(context));
 }
 
 void deimos_d_fuse_mknod (in char*  path, mode_t mode, dev_t rdev) {
