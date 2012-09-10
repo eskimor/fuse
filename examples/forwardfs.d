@@ -255,7 +255,7 @@ class ForwardFs : FuseOperations {
 	    auto mpath=get_forwarding_path(path.idup);
 	    ssize_t len=unistd.readlink(mpath.toStringz(), cast(char*)(buf.ptr), buf.length-1);
 		errnoEnforce(len>=0);
-		assert(len>buf.length-1);
+		assert(len<=buf.length-1);
 		assert(buf.length>0);
 		buf[len]=0;
 	}
